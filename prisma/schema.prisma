@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrganizationType {
+  FARM
+  RESEARCH_INSTITUTION
+  BIOTECH
+  PHARMA
+  CRO
+  VETERINARY
+  LOGISTICS
+  RAM
+}
+
+enum AnimalCaseStatus {
+  DRAFT
+  SUBMITTED
+  TRIAGE
+  VET_REVIEW
+  DIAGNOSTICS
+  VERIFIED
+  AVAILABLE
+  RESERVED
+  RESEARCH_CLEARANCE
+  CONTRACTED
+  IN_TRANSIT
+  ACTIVE_STUDY
+  COMPLETED
+  CLOSED
+}
+
+enum DisclosureTier {
+  PUBLIC_ANONYMIZED
+  REQUESTABLE
+  POST_RESERVATION
+  POST_PURCHASE
+  RAM_INTERNAL_ONLY
+}
+
+model Organization {
+  id        String           @id @default(cuid())
+  name      String
+  type      OrganizationType
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  farms     Farm[]
+  users     User[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  name           String
+  organizationId String
+  role           String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Farm {
+  id             String       @id @default(cuid())
+  organizationId String
+  exactAddress   String
+  regionLabel    String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  animals        AnimalCase[]
+  permissions    FarmDisclosurePolicy?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model FarmDisclosurePolicy {
+  id                        String  @id @default(cuid())
+  farmId                    String  @unique
+  shareGeneralHusbandry     Boolean @default(true)
+  shareCountyAfterNda       Boolean @default(false)
+  shareIdentityPrePurchase  Boolean @default(false)
+  shareIdentityPostPurchase Boolean @default(true)
+  farm                      Farm    @relation(fields: [farmId], references: [id])
+}
+
+model AnimalCase {
+  id                   String              @id
+  farmId               String
+  species              String
+  breed                String?
+  sex                  String?
+  ageMonths            Int?
+  weightKg             Float?
+  condition            String
+  diseaseStage         String?
+  diagnosticConfidence String?
+  regionLabel          String
+  publicSummary        String
+  sourceDisclosure     DisclosureTier      @default(PUBLIC_ANONYMIZED)
+  status               AnimalCaseStatus    @default(DRAFT)
+  listPriceCents       Int?
+  farm                 Farm                @relation(fields: [farmId], references: [id])
+  disclosureRequests   DisclosureRequest[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([species, condition, status])
+  @@index([farmId])
+}
+
+model DisclosureRequest {
+  id               String     @id @default(cuid())
+  animalCaseId     String
+  requesterUserId  String
+  requestedFields  Json
+  scientificReason String
+  status           String
+  farmApproved     Boolean?
+  reviewedByRam    Boolean    @default(false)
+  animalCase       AnimalCase @relation(fields: [animalCaseId], references: [id])
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
