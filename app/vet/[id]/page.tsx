@@ -55,6 +55,7 @@ export default async function VeterinaryCandidatePage({
               </label>
               <label><span>Diagnosis</span><input name="diagnosis" /></label>
               <label><span>Disease stage</span><input name="diseaseStage" /></label>
+              <label><span>Etiology / suspected cause</span><input name="etiology" /></label>
               <label>
                 <span>Diagnostic confidence</span>
                 <select name="diagnosticConfidence" defaultValue="">
@@ -67,6 +68,14 @@ export default async function VeterinaryCandidatePage({
               <label className="span2">
                 <span>Phenotype observations</span>
                 <textarea name="phenotype" rows={5} placeholder="One observation per line, or separate with semicolons." />
+              </label>
+              <label className="span2">
+                <span>Comorbidities</span>
+                <textarea name="comorbidities" rows={3} placeholder="One clinically relevant comorbidity per line." />
+              </label>
+              <label className="span2">
+                <span>Diagnostic evidence</span>
+                <textarea name="diagnosticEvidence" rows={4} placeholder="Tests, imaging, labs, pathology or other evidence; one item per line." />
               </label>
               <label className="span2">
                 <span>Scientist-facing summary</span>
