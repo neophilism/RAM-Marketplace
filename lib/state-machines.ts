@@ -49,20 +49,40 @@ export function canTransitionOrder(from: OrderStatus, to: OrderStatus): boolean 
 }
 
 export function assertCandidateTransition(from: CandidateStatus, to: CandidateStatus): void {
-  if (!canTransitionCandidate(from, to)) throw new Error(`Invalid candidate transition: ${from} -> ${to}`);
+  if (!canTransitionCandidate(from, to)) {
+    throw new Error(`Invalid candidate transition: ${from} -> ${to}`);
+  }
 }
 
 export function assertOrderTransition(from: OrderStatus, to: OrderStatus): void {
-  if (!canTransitionOrder(from, to)) throw new Error(`Invalid order transition: ${from} -> ${to}`);
+  if (!canTransitionOrder(from, to)) {
+    throw new Error(`Invalid order transition: ${from} -> ${to}`);
+  }
 }
 
 export const canonicalCandidateHappyPath: readonly CandidateStatus[] = [
-  "DRAFT", "SUBMITTED", "PRE_SCREENED", "VET_PENDING", "VERIFIED",
-  "MATCHABLE", "RESERVED", "SOLD_TO_RAM", "TRANSFERRED"
+  "DRAFT",
+  "SUBMITTED",
+  "PRE_SCREENED",
+  "VET_PENDING",
+  "VERIFIED",
+  "MATCHABLE",
+  "RESERVED",
+  "SOLD_TO_RAM",
+  "TRANSFERRED"
 ];
 
 export const canonicalOrderHappyPath: readonly OrderStatus[] = [
-  "DRAFT", "CANDIDATE_HELD", "CHECKOUT_PENDING", "BUYER_COMMITTED",
-  "ACQUISITION_COMMITTED", "CLEARANCE_PENDING", "READY_FOR_PICKUP",
-  "IN_TRANSIT", "DELIVERED", "ACCEPTED", "SETTLED", "CLOSED"
+  "DRAFT",
+  "CANDIDATE_HELD",
+  "CHECKOUT_PENDING",
+  "BUYER_COMMITTED",
+  "ACQUISITION_COMMITTED",
+  "CLEARANCE_PENDING",
+  "READY_FOR_PICKUP",
+  "IN_TRANSIT",
+  "DELIVERED",
+  "ACCEPTED",
+  "SETTLED",
+  "CLOSED"
 ];
