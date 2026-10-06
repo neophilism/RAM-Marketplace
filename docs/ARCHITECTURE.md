@@ -1,10 +1,12 @@
-# RAM Marketplace architecture v0.2
+# RAM Marketplace architecture v0.3
 
 ## Governing product rule
 
 The scientist marketplace is **animal-centered, not seller-centered**.
 
-A farm is never rendered as a branded marketplace seller. Scientist-facing listings are projections of verified animal cases. Farm identity, exact address, owner information, veterinarian identity, payment information and other source-sensitive data live behind a separate authorization boundary.
+A farm is never rendered as a branded marketplace seller. Scientist-facing listings are projections of verified animal cases. Farm identity, exact address, owner information, veterinarian identity, supplier payment information and other source-sensitive data live behind a separate authorization boundary.
+
+The persistence model reinforces that rule structurally: `AnimalCase` contains marketplace-eligible scientific information, while `AnimalSourceRecord` is a separate one-to-one restricted record containing the farm/site link and identifying source information. Scientist-facing services must not query or join `AnimalSourceRecord`.
 
 ## Commercial invariant
 
@@ -45,6 +47,12 @@ Failure/exception states include `EXPIRED`, `CLEARANCE_FAILED`, `SUPPLIER_WITHDR
 
 A blocking compliance finding prevents the transition to `READY_FOR_PICKUP`.
 
+## Research-need lifecycle
+
+`DRAFT -> SUBMITTED -> VERIFIED -> ACTIVE -> MATCH_REVIEW -> SELECTED -> INSTITUTIONAL_CLEARANCE -> ORDERED -> IN_STUDY -> COMPLETED -> CLOSED`
+
+Backward transitions are allowed only where defined in `lib/workflows.ts` for correction or re-selection.
+
 ## Privacy architecture
 
 ### Research-facing projection
@@ -53,7 +61,11 @@ RAM animal ID, species, breed where approved, age/sex/weight, phenotype, diagnos
 
 ### Restricted source record
 
-Farm identity, exact location, owner identities, local veterinarian, contracts, supplier acquisition price, payment information, source documents and any field capable of indirectly identifying the farm.
+Farm/site identity, exact location, owner identities, local veterinarian, contracts, supplier acquisition price, payment information, source documents and any field capable of indirectly identifying the farm.
+
+### Enforced query boundary
+
+The scientist marketplace is built through `lib/server/marketplace.ts`, which projects server-only restricted records through `toMarketplaceListing()`. Automated tests fail if a forbidden source key appears in a marketplace record.
 
 ### Indirect-identification controls
 
@@ -83,23 +95,30 @@ Every score must preserve component values, reason strings, evidence and confide
 
 ## Tenancy and authorization
 
-The persistence model supports users with one or more organization memberships rather than a single global role. Membership roles map to product permissions in `lib/rbac.ts`. Authorization will combine role permissions with organization, facility, order relationship and assignment attributes.
+Users can hold one or more organization memberships rather than a single global role. Canonical membership roles and permissions live in `lib/rbac.ts`. Additional privacy capabilities prohibit research users from reading restricted source records and reserve source disclosure approval to authorized supplier/RAM roles.
+
+Authorization will combine role permissions with organization, facility, order relationship and assignment attributes.
+
+## Current transactional prototype
+
+Phase 2 includes validated farm submissions and research requests, a veterinary verification workspace, dynamic dashboards and a server-side prototype store. The store exists only to exercise the end-to-end UI before deployment infrastructure is provisioned; PostgreSQL is the durable system of record defined by this schema.
 
 ## Implementation order
 
-1. Auth + organizations + RBAC
-2. Persisted animal submission
-3. Research-needs workflow
-4. Veterinary verification
-5. Anonymous marketplace query layer
-6. Disclosure authorization service
-7. Matching engine
-8. Reservation/quote/acquisition workflow
-9. Compliance clearance + logistics
-10. Payment/payout ledger
-11. Audit/security hardening
-12. End-to-end tests and pilot deployment
+1. Authentication/session boundary
+2. PostgreSQL migrations + durable repositories
+3. Organization/membership onboarding
+4. Persisted candidate submission
+5. Persisted research-needs workflow
+6. Veterinary verification persistence
+7. Disclosure authorization service
+8. Matching engine
+9. Reservation/quote/acquisition workflow
+10. Compliance clearance + logistics
+11. Payment/payout ledger
+12. Audit/security hardening
+13. End-to-end tests and pilot deployment
 
 ## Test policy
 
-CI must protect the non-negotiable business rules, not just compile the UI. Current invariant tests cover supplier-price decoupling, canonical state transitions, the compliance hard gate, matching weights and baseline RBAC separation.
+CI protects non-negotiable business rules, not just UI compilation. Current tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, baseline RBAC separation, restricted-source authorization and marketplace anonymization.

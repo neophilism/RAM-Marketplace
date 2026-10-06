@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
-import { animalListings, getAnimal } from "@/lib/mock-data";
+import { getMarketplaceListing, getMarketplaceListings } from "@/lib/server/marketplace";
 
 export function generateStaticParams() {
-  return animalListings.map((animal) => ({ id: animal.id }));
+  return getMarketplaceListings().map((animal) => ({ id: animal.id }));
 }
 
 export default async function AnimalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const animal = getAnimal(id);
+  const animal = getMarketplaceListing(id);
   if (!animal) notFound();
+
   return (
     <section className="page narrow">
       <div className="detailHeader">
@@ -31,7 +32,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
         </article>
         <article className="panel">
           <h2>Source privacy</h2>
-          <p>The farm is intentionally anonymous. RAM holds the verified source record in a restricted data layer and reveals only information authorized for the current transaction stage.</p>
+          <p>The farm is intentionally anonymous. This page is generated from RAM's marketplace projection and has no access to the restricted source record.</p>
           <div className="privacyState"><strong>Current disclosure tier</strong><span>{animal.sourceDisclosure.replaceAll("_", " ")}</span></div>
           <button className="secondaryButton" type="button">Request additional source information</button>
           <p className="finePrint">Requests must identify scientific or purchasing relevance. Release depends on farm permissions, RAM review, and any required NDA or transaction milestone.</p>
