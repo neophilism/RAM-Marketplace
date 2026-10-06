@@ -20,6 +20,7 @@ export default async function SettlementPage({
 
   const balancesClear =
     settlement.buyerOutstandingCents === 0 &&
+    settlement.buyerRefundDueCents === 0 &&
     settlement.supplierOutstandingCents === 0;
 
   return (
@@ -39,8 +40,12 @@ export default async function SettlementPage({
       </div>
 
       <div className="metricGrid">
-        <article><strong>{money(settlement.buyerReceivableCents)}</strong><span>Buyer receivable</span></article>
+        <article><strong>{money(settlement.buyerReceivableCents)}</strong><span>Original buyer receivable</span></article>
+        <article><strong>{money(settlement.effectiveBuyerReceivableCents)}</strong><span>Receivable after credits</span></article>
+        <article><strong>{money(settlement.buyerCreditsCents)}</strong><span>Buyer credits</span></article>
+        <article><strong>{money(settlement.buyerRefundedCents)}</strong><span>Buyer refunded</span></article>
         <article><strong>{money(settlement.buyerOutstandingCents)}</strong><span>Buyer outstanding</span></article>
+        <article><strong>{money(settlement.buyerRefundDueCents)}</strong><span>Refund due</span></article>
         <article><strong>{money(settlement.supplierPayableCents)}</strong><span>Supplier payable</span></article>
         <article><strong>{money(settlement.supplierOutstandingCents)}</strong><span>Supplier outstanding</span></article>
         <article><strong>{money(settlement.directCostsCents)}</strong><span>Direct costs</span></article>
@@ -98,6 +103,34 @@ export default async function SettlementPage({
         </div>
       )}
 
+      {settlement.settlementStatus === "OPEN" && settlement.orderStatus === "DISPUTED" && (
+        <div className="detailGrid">
+          <article className="panel">
+            <h2>Issue buyer credit</h2>
+            <p>A credit reduces the receivable without rewriting the original quote. For a full replacement or refund resolution, credit the full original receivable.</p>
+            <form className="formStack" action={"/api/finance/settlements/" + settlement.id + "/movement"} method="post">
+              <input type="hidden" name="movementType" value="BUYER_CREDIT" />
+              <label><span>Credit amount (USD) *</span><input name="amountUsd" type="number" min="0.01" step="0.01" max={(settlement.buyerReceivableCents - settlement.buyerCreditsCents) / 100} required /></label>
+              <label><span>Credit memo / dispute reference *</span><input name="externalReference" required /></label>
+              <label><span>Notes</span><textarea name="notes" rows={3} /></label>
+              <button className="secondaryButton" type="submit" disabled={settlement.buyerReceivableCents === settlement.buyerCreditsCents}>Record buyer credit</button>
+            </form>
+          </article>
+
+          <article className="panel">
+            <h2>Record buyer refund</h2>
+            <p>Refunds return cash already paid and are limited to the refund due created by buyer credits. Record the credit first.</p>
+            <form className="formStack" action={"/api/finance/settlements/" + settlement.id + "/movement"} method="post">
+              <input type="hidden" name="movementType" value="BUYER_REFUND" />
+              <label><span>Refund amount (USD) *</span><input name="amountUsd" type="number" min="0.01" step="0.01" max={settlement.buyerRefundDueCents / 100} required /></label>
+              <label><span>Bank / processor refund reference *</span><input name="externalReference" required /></label>
+              <label><span>Notes</span><textarea name="notes" rows={3} /></label>
+              <button className="secondaryButton" type="submit" disabled={settlement.buyerRefundDueCents === 0}>Record buyer refund</button>
+            </form>
+          </article>
+        </div>
+      )}
+
       {settlement.settlementStatus === "OPEN" && balancesClear && (
         <article className="panel">
           <h2>Finalize financial settlement</h2>
@@ -108,6 +141,8 @@ export default async function SettlementPage({
                 <button className="primaryButton" type="submit">Finalize settlement</button>
               </form>
             </>
+          ) : settlement.orderStatus === "DISPUTED" ? (
+            <p>All balances are clear. Complete the RAM dispute resolution; replacement/refund resolutions will settle this ledger automatically.</p>
           ) : (
             <p>All balances are clear, but the order cannot settle until the buyer institution has accepted the delivered animal.</p>
           )}

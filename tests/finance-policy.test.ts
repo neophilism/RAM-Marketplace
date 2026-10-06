@@ -42,7 +42,7 @@ test("financial movement cannot exceed the outstanding balance", () => {
   const balances = financialBalances(snapshot, []);
   assert.throws(
     () => assertMovementWithinOutstanding("SUPPLIER_PAYOUT", 15_001, balances),
-    /exceeds the outstanding/
+    /exceeds the available balance/
   );
 });
 
@@ -65,5 +65,41 @@ test("reconciliation closes only a settled order", () => {
   assert.throws(
     () => assertReconciliationCloseReady("ACCEPTED", "OPEN"),
     /Only a settled order/
+  );
+});
+
+
+test("buyer credit reduces receivable without rewriting payment history", () => {
+  const balances = financialBalances(snapshot, [
+    { type: "BUYER_PAYMENT", amountCents: 100_000 },
+    { type: "BUYER_CREDIT", amountCents: 50_000 }
+  ]);
+
+  assert.equal(balances.buyerPaidCents, 100_000);
+  assert.equal(balances.buyerCreditsCents, 50_000);
+  assert.equal(balances.effectiveBuyerReceivableCents, 200_000);
+  assert.equal(balances.buyerOutstandingCents, 100_000);
+});
+
+test("credit after payment creates an auditable refund due", () => {
+  const balances = financialBalances(snapshot, [
+    { type: "BUYER_PAYMENT", amountCents: 250_000 },
+    { type: "BUYER_CREDIT", amountCents: 250_000 }
+  ]);
+  assert.equal(balances.buyerRefundDueCents, 250_000);
+
+  assert.doesNotThrow(() =>
+    assertMovementWithinOutstanding("BUYER_REFUND", 250_000, balances)
+  );
+});
+
+test("refund cannot exceed the refund due created by credit", () => {
+  const balances = financialBalances(snapshot, [
+    { type: "BUYER_PAYMENT", amountCents: 100_000 },
+    { type: "BUYER_CREDIT", amountCents: 50_000 }
+  ]);
+  assert.throws(
+    () => assertMovementWithinOutstanding("BUYER_REFUND", 1, balances),
+    /exceeds the available balance/
   );
 });

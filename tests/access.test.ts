@@ -70,3 +70,11 @@ test("RAM finance can manage settlements while research and transport roles cann
   assert.equal(can("RESEARCH_COMPLIANCE", "settlement:manage"), false);
   assert.equal(can("TRANSPORT_PROVIDER", "settlement:manage"), false);
 });
+
+
+test("RAM operations can resolve disputes while finance and buyer roles cannot", () => {
+  assert.equal(can("RAM_MARKETPLACE_OPS", "dispute:manage"), true);
+  assert.equal(can("RAM_FINANCE_ADMIN", "dispute:manage"), false);
+  assert.equal(can("RESEARCH_PROCUREMENT", "dispute:manage"), false);
+  assert.equal(can("RESEARCH_COMPLIANCE", "dispute:manage"), false);
+});

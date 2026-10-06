@@ -3,7 +3,9 @@ import { calculateSupplierAcquisitionPriceCents } from "./pricing";
 
 export const FINANCIAL_MOVEMENT_TYPES = [
   "BUYER_PAYMENT",
-  "SUPPLIER_PAYOUT"
+  "SUPPLIER_PAYOUT",
+  "BUYER_CREDIT",
+  "BUYER_REFUND"
 ] as const;
 
 export type FinancialMovementType = (typeof FINANCIAL_MOVEMENT_TYPES)[number];
@@ -56,29 +58,60 @@ export function financialBalances(
   const buyerPaidCents = movements
     .filter((entry) => entry.type === "BUYER_PAYMENT")
     .reduce((sum, entry) => sum + entry.amountCents, 0);
+  const buyerCreditsCents = movements
+    .filter((entry) => entry.type === "BUYER_CREDIT")
+    .reduce((sum, entry) => sum + entry.amountCents, 0);
+  const buyerRefundedCents = movements
+    .filter((entry) => entry.type === "BUYER_REFUND")
+    .reduce((sum, entry) => sum + entry.amountCents, 0);
   const supplierPaidCents = movements
     .filter((entry) => entry.type === "SUPPLIER_PAYOUT")
     .reduce((sum, entry) => sum + entry.amountCents, 0);
 
   for (const [name, value] of [
     ["buyerPaidCents", buyerPaidCents],
+    ["buyerCreditsCents", buyerCreditsCents],
+    ["buyerRefundedCents", buyerRefundedCents],
     ["supplierPaidCents", supplierPaidCents]
   ] as const) {
     assertNonNegativeInteger(name, value);
   }
 
-  if (buyerPaidCents > snapshot.buyerReceivableCents) {
-    throw new Error("Buyer payments exceed the receivable");
+  if (buyerCreditsCents > snapshot.buyerReceivableCents) {
+    throw new Error("Buyer credits exceed the original receivable");
+  }
+  if (buyerRefundedCents > buyerPaidCents) {
+    throw new Error("Buyer refunds exceed recorded buyer payments");
   }
   if (supplierPaidCents > snapshot.supplierPayableCents) {
     throw new Error("Supplier payouts exceed the committed payable");
   }
 
+  const effectiveBuyerReceivableCents =
+    snapshot.buyerReceivableCents - buyerCreditsCents;
+  const buyerNetPaidCents = buyerPaidCents - buyerRefundedCents;
+  const buyerOutstandingCents = Math.max(
+    effectiveBuyerReceivableCents - buyerNetPaidCents,
+    0
+  );
+  const buyerRefundDueCents = Math.max(
+    buyerNetPaidCents - effectiveBuyerReceivableCents,
+    0
+  );
+
   return {
     buyerPaidCents,
+    buyerCreditsCents,
+    buyerRefundedCents,
+    buyerNetPaidCents,
+    effectiveBuyerReceivableCents,
+    buyerCreditAvailableCents:
+      snapshot.buyerReceivableCents - buyerCreditsCents,
+    buyerOutstandingCents,
+    buyerRefundDueCents,
     supplierPaidCents,
-    buyerOutstandingCents: snapshot.buyerReceivableCents - buyerPaidCents,
-    supplierOutstandingCents: snapshot.supplierPayableCents - supplierPaidCents
+    supplierOutstandingCents:
+      snapshot.supplierPayableCents - supplierPaidCents
   };
 }
 
@@ -91,13 +124,19 @@ export function assertMovementWithinOutstanding(
     throw new Error("Financial movement must be a positive integer number of cents");
   }
 
-  const outstanding =
-    type === "BUYER_PAYMENT"
-      ? balances.buyerOutstandingCents
-      : balances.supplierOutstandingCents;
+  let available: number;
+  if (type === "BUYER_PAYMENT") {
+    available = balances.buyerOutstandingCents;
+  } else if (type === "SUPPLIER_PAYOUT") {
+    available = balances.supplierOutstandingCents;
+  } else if (type === "BUYER_CREDIT") {
+    available = balances.buyerCreditAvailableCents;
+  } else {
+    available = balances.buyerRefundDueCents;
+  }
 
-  if (amountCents > outstanding) {
-    throw new Error("Financial movement exceeds the outstanding balance");
+  if (amountCents > available) {
+    throw new Error("Financial movement exceeds the available balance");
   }
 }
 
@@ -110,9 +149,26 @@ export function assertSettlementReady(
   }
   if (
     balances.buyerOutstandingCents !== 0 ||
+    balances.buyerRefundDueCents !== 0 ||
     balances.supplierOutstandingCents !== 0
   ) {
     throw new Error("All buyer and supplier balances must be satisfied before settlement");
+  }
+}
+
+export function assertDisputeFinancialResolutionReady(
+  orderStatus: OrderStatus,
+  balances: ReturnType<typeof financialBalances>
+) {
+  if (orderStatus !== "DISPUTED") {
+    throw new Error("Dispute financial resolution requires a disputed order");
+  }
+  if (
+    balances.buyerOutstandingCents !== 0 ||
+    balances.buyerRefundDueCents !== 0 ||
+    balances.supplierOutstandingCents !== 0
+  ) {
+    throw new Error("All dispute balances must be resolved before financial settlement");
   }
 }
 

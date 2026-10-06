@@ -172,6 +172,20 @@ enum FinancialLedgerEntryType {
   DIRECT_COST
   BUYER_PAYMENT
   SUPPLIER_PAYOUT
+  BUYER_CREDIT
+  BUYER_REFUND
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+}
+
+enum DisputeResolutionType {
+  ACCEPT_AS_IS
+  ACCEPT_WITH_CREDIT
+  REPLACEMENT
+  REFUND
 }
 
 model Organization {
@@ -209,6 +223,8 @@ model User {
   transportAssignmentsCreated TransportAssignment[] @relation("TransportAssignedBy")
   transportEvents    TransportEvent[] @relation("TransportEventActor")
   receivingInspections ReceiptInspection[] @relation("ReceivingInspector")
+  openedDisputes     OrderDispute[]      @relation("DisputeOpenedBy")
+  resolvedDisputes   OrderDispute[]      @relation("DisputeResolvedBy")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -493,6 +509,7 @@ model Order {
   transportAssignment         TransportAssignment?
   receivingInspection         ReceiptInspection?
   financialSettlement         FinancialSettlement?
+  dispute                     OrderDispute?
   createdAt                   DateTime     @default(now())
   updatedAt                   DateTime     @updatedAt
 
@@ -601,6 +618,27 @@ model ReceiptInspection {
   updatedAt                   DateTime        @updatedAt
 
   @@index([decision, inspectedAt])
+}
+
+model OrderDispute {
+  id                 String                 @id @default(cuid())
+  orderId            String                 @unique
+  status             DisputeStatus          @default(OPEN)
+  reason             String
+  openedByUserId     String
+  openedAt           DateTime               @default(now())
+  resolutionType     DisputeResolutionType?
+  resolutionNotes    String?
+  resolvedByUserId   String?
+  resolvedAt         DateTime?
+  order              Order                  @relation(fields: [orderId], references: [id])
+  openedBy           User                   @relation("DisputeOpenedBy", fields: [openedByUserId], references: [id])
+  resolvedBy         User?                  @relation("DisputeResolvedBy", fields: [resolvedByUserId], references: [id])
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([status, openedAt])
+  @@index([resolutionType, resolvedAt])
 }
 
 model FinancialSettlement {

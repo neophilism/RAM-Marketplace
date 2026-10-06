@@ -37,7 +37,7 @@ const orderTransitions: Record<OrderStatus, readonly OrderStatus[]> = {
   BUYER_CANCELLED: [],
   TRANSPORT_EXCEPTION: ["IN_TRANSIT", "DELIVERED", "DISPUTED"],
   REJECTED_AT_RECEIPT: ["DISPUTED"],
-  DISPUTED: ["SETTLED", "CLOSED"]
+  DISPUTED: ["ACCEPTED", "SETTLED", "CLOSED"]
 };
 
 export function canTransitionCandidate(from: CandidateStatus, to: CandidateStatus): boolean {

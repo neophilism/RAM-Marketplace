@@ -36,7 +36,12 @@ export interface FinancialSettlementSummary {
   settlementStatus: string;
   buyerReceivableCents: number;
   buyerPaidCents: number;
+  buyerCreditsCents: number;
+  buyerRefundedCents: number;
+  buyerNetPaidCents: number;
+  effectiveBuyerReceivableCents: number;
   buyerOutstandingCents: number;
+  buyerRefundDueCents: number;
   supplierPayableCents: number;
   supplierPaidCents: number;
   supplierOutstandingCents: number;
@@ -68,7 +73,10 @@ function movementEntries(
   return entries
     .filter(
       (entry): entry is { type: FinancialMovementType; amountCents: number } =>
-        entry.type === "BUYER_PAYMENT" || entry.type === "SUPPLIER_PAYOUT"
+        entry.type === "BUYER_PAYMENT" ||
+        entry.type === "SUPPLIER_PAYOUT" ||
+        entry.type === "BUYER_CREDIT" ||
+        entry.type === "BUYER_REFUND"
     )
     .map((entry) => ({ type: entry.type, amountCents: entry.amountCents }));
 }
@@ -90,7 +98,12 @@ function prototypeSummary(settlement: ReturnType<typeof getPrototypeFinancialSet
     settlementStatus: settlement.status,
     buyerReceivableCents: settlement.buyerReceivableCents,
     buyerPaidCents: balances.buyerPaidCents,
+    buyerCreditsCents: balances.buyerCreditsCents,
+    buyerRefundedCents: balances.buyerRefundedCents,
+    buyerNetPaidCents: balances.buyerNetPaidCents,
+    effectiveBuyerReceivableCents: balances.effectiveBuyerReceivableCents,
     buyerOutstandingCents: balances.buyerOutstandingCents,
+    buyerRefundDueCents: balances.buyerRefundDueCents,
     supplierPayableCents: settlement.supplierPayableCents,
     supplierPaidCents: balances.supplierPaidCents,
     supplierOutstandingCents: balances.supplierOutstandingCents,
@@ -143,7 +156,12 @@ export async function listFinancialSettlements(
       settlementStatus: row.status,
       buyerReceivableCents: row.buyerReceivableCents,
       buyerPaidCents: balances.buyerPaidCents,
+      buyerCreditsCents: balances.buyerCreditsCents,
+      buyerRefundedCents: balances.buyerRefundedCents,
+      buyerNetPaidCents: balances.buyerNetPaidCents,
+      effectiveBuyerReceivableCents: balances.effectiveBuyerReceivableCents,
       buyerOutstandingCents: balances.buyerOutstandingCents,
+      buyerRefundDueCents: balances.buyerRefundDueCents,
       supplierPayableCents: row.supplierPayableCents,
       supplierPaidCents: balances.supplierPaidCents,
       supplierOutstandingCents: balances.supplierOutstandingCents,
@@ -212,7 +230,12 @@ export async function getFinancialSettlement(
     settlementStatus: row.status,
     buyerReceivableCents: row.buyerReceivableCents,
     buyerPaidCents: balances.buyerPaidCents,
+    buyerCreditsCents: balances.buyerCreditsCents,
+    buyerRefundedCents: balances.buyerRefundedCents,
+    buyerNetPaidCents: balances.buyerNetPaidCents,
+    effectiveBuyerReceivableCents: balances.effectiveBuyerReceivableCents,
     buyerOutstandingCents: balances.buyerOutstandingCents,
+    buyerRefundDueCents: balances.buyerRefundDueCents,
     supplierPayableCents: row.supplierPayableCents,
     supplierPaidCents: balances.supplierPaidCents,
     supplierOutstandingCents: balances.supplierOutstandingCents,
@@ -298,7 +321,11 @@ export async function recordFinancialMovement(
         action:
           input.movementType === "BUYER_PAYMENT"
             ? "BUYER_PAYMENT_RECORDED"
-            : "SUPPLIER_PAYOUT_RECORDED",
+            : input.movementType === "SUPPLIER_PAYOUT"
+              ? "SUPPLIER_PAYOUT_RECORDED"
+              : input.movementType === "BUYER_CREDIT"
+                ? "BUYER_CREDIT_RECORDED"
+                : "BUYER_REFUND_RECORDED",
         entityType: "FinancialSettlement",
         entityId: settlement.id,
         nextState: {

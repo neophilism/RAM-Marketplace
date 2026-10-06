@@ -7,6 +7,7 @@ import {
   calculateSupplierAcquisitionPriceCents
 } from "../lib/pricing";
 import { hasPermission } from "../lib/rbac";
+import { canTransitionResearchNeed } from "../lib/workflows";
 import {
   canTransitionCandidate,
   canTransitionOrder,
@@ -110,4 +111,13 @@ test("RBAC separates supplier, research, compliance, transport and finance power
   assert.equal(hasPermission("RAM_FINANCE_ADMIN", "PRICING_POLICY_MANAGE"), true);
   assert.equal(hasPermission("RESEARCH_COMPLIANCE", "RECEIVING_INSPECTION"), true);
   assert.equal(hasPermission("RESEARCH_PROCUREMENT", "RECEIVING_INSPECTION"), false);
+});
+
+
+test("dispute recovery paths are explicit and do not skip into unrelated states", () => {
+  assert.equal(canTransitionOrder("REJECTED_AT_RECEIPT", "DISPUTED"), true);
+  assert.equal(canTransitionOrder("DISPUTED", "ACCEPTED"), true);
+  assert.equal(canTransitionOrder("DISPUTED", "SETTLED"), true);
+  assert.equal(canTransitionOrder("REJECTED_AT_RECEIPT", "ACCEPTED"), false);
+  assert.equal(canTransitionResearchNeed("ORDERED", "ACTIVE"), true);
 });

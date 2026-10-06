@@ -129,6 +129,20 @@ A separate reconciliation attestation and external reference then closes the com
 
 Commercial close does not imply that the research study is scientifically complete. See `docs/FINANCE.md`.
 
+## Rejected-receipt disputes
+
+A rejected receiving inspection automatically opens a formal dispute:
+
+`DELIVERED -> REJECTED_AT_RECEIPT -> DISPUTED`
+
+RAM operations may resolve the dispute as accept-as-is, accept-with-credit, replacement, or refund.
+
+- acceptance resolutions: `DISPUTED -> ACCEPTED` and `ORDERED -> IN_STUDY`;
+- replacement: fully unwind the original order, `DISPUTED -> SETTLED`, and reopen the need `ORDERED -> ACTIVE`;
+- refund: fully unwind the original order, `DISPUTED -> SETTLED`, and close the need `ORDERED -> CLOSED`.
+
+Credits/refunds are append-only ledger entries. Neither changes the committed supplier payable. See `docs/DISPUTES.md`.
+
 ## Privacy boundaries
 
 ### Buyer order projection
@@ -165,7 +179,6 @@ The current implementation performs this cleanup lazily on marketplace/order acc
 
 The remaining transaction layers are:
 
-- rejected-receipt disputes, replacements, credits and refunds;
 - provider-integrated payment initiation / webhooks around the existing ledger;
 - carrier / veterinary payables where those services are separately billable;
 - study completion / closure bookkeeping.

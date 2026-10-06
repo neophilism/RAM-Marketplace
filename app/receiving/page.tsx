@@ -21,8 +21,8 @@ export default async function ReceivingPage() {
 
       <div className="metricGrid">
         <article><strong>{pending.length}</strong><span>Awaiting inspection</span></article>
-        <article><strong>{orders.filter((order) => order.status === "ACCEPTED").length}</strong><span>Accepted</span></article>
-        <article><strong>{orders.filter((order) => order.status === "REJECTED_AT_RECEIPT").length}</strong><span>Rejected at receipt</span></article>
+        <article><strong>{orders.filter((order) => order.receiptDecision === "ACCEPTED").length}</strong><span>Accepted</span></article>
+        <article><strong>{orders.filter((order) => order.receiptDecision === "REJECTED").length}</strong><span>Rejected at receipt</span></article>
       </div>
 
       <div className="tableCard">
