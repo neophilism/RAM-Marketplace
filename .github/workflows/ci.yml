@@ -58,6 +58,10 @@ jobs:
       RAM_DEMO_AUTH_ENABLED: "true"
       RAM_PUBLIC_ONBOARDING_ENABLED: "false"
       AUTH_SECRET: ram-ci-postgres-secret-that-is-long-enough-2026
+      RAM_IDENTITY_ASSERTION_SECRET: ram-ci-identity-assertion-secret-value-2026
+      RAM_IDENTITY_ALLOWED_PROVIDERS: ci-idp
+      RAM_IDENTITY_LOGIN_URL: https://identity.example.test/login
+      RAM_IDENTITY_REQUIRE_MFA: "true"
       RAM_MAX_MUTATION_BYTES: "1048576"
     steps:
       - uses: actions/checkout@v4
@@ -75,7 +79,7 @@ jobs:
         run: npm run db:seed:e2e
       - name: Build production application
         run: npm run build
-      - name: Live multi-role PostgreSQL E2E
+      - name: Live PostgreSQL transaction and identity lifecycle E2E
         env:
           RAM_E2E_BASE_URL: http://127.0.0.1:3118
         run: |
@@ -83,6 +87,7 @@ jobs:
           server_pid=$!
           trap 'cat /tmp/ram-postgres-e2e.log; kill "$server_pid" 2>/dev/null || true' EXIT
           npm run e2e:live
+          npm run e2e:identity
       - name: Verify PostgreSQL dump and restore
         env:
           PGPASSWORD: postgres
@@ -91,7 +96,7 @@ jobs:
           createdb -h 127.0.0.1 -U postgres ram_restore
           pg_restore -h 127.0.0.1 -U postgres -d ram_restore --no-owner --no-acl /tmp/ram-marketplace.dump
 
-          for table in Organization User AnimalCase ResearchNeed Order FinancialSettlement FinancialLedgerEntry AuditEvent; do
+          for table in Organization User Membership ExternalIdentity IdentityAssertionUse OrganizationVerification AnimalCase ResearchNeed Order FinancialSettlement FinancialLedgerEntry AuditEvent; do
             source_count=$(psql -h 127.0.0.1 -U postgres -d ram_marketplace -Atc "SELECT count(*) FROM \"$table\";")
             restore_count=$(psql -h 127.0.0.1 -U postgres -d ram_restore -Atc "SELECT count(*) FROM \"$table\";")
             test "$source_count" = "$restore_count"
