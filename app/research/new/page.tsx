@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NewResearchNeedPage() {
   return (
     <section className="page narrow">
@@ -9,7 +11,7 @@ export default function NewResearchNeedPage() {
         </div>
       </div>
 
-      <form className="formStack">
+      <form className="formStack" action="/api/research-needs" method="post">
         <section className="panel formSection">
           <div className="sectionNumber">01</div>
           <div><h2>Scientific objective</h2><p>Start with the disease state and the reason the model is needed.</p></div>
@@ -49,7 +51,7 @@ export default function NewResearchNeedPage() {
         </section>
 
         <div className="formActions">
-          <button className="secondaryButton" type="button">Save draft</button>
+          <Link className="secondaryButton" href="/research">Cancel</Link>
           <button className="primaryButton" type="submit">Submit research need</button>
         </div>
       </form>
