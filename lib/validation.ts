@@ -236,3 +236,94 @@ export type DisclosureRamReviewInput = z.infer<typeof disclosureRamReviewSchema>
 export type DisclosureSupplierReviewInput = z.infer<typeof disclosureSupplierReviewSchema>;
 export type DisclosureNdaAcceptInput = z.infer<typeof disclosureNdaAcceptSchema>;
 export type FarmDisclosurePolicyInput = z.infer<typeof farmDisclosurePolicySchema>;
+
+
+export const transportAssignmentSchema = z.object({
+  orderId: z.string().min(3).max(120),
+  transportOrganizationId: z.string().min(3).max(120),
+  assignedTransportUserId: z.string().min(3).max(120).optional(),
+  pickupWindowStart: z.string().optional(),
+  pickupWindowEnd: z.string().optional(),
+  deliveryWindowStart: z.string().optional(),
+  deliveryWindowEnd: z.string().optional(),
+  movementDocumentRefs: z.string().max(4000).optional(),
+  sanitationRequirements: z.string().max(4000).optional(),
+  specialInstructions: z.string().max(4000).optional()
+}).superRefine((value, ctx) => {
+  const pairs = [
+    ["pickupWindowStart", value.pickupWindowStart, "pickupWindowEnd", value.pickupWindowEnd],
+    ["deliveryWindowStart", value.deliveryWindowStart, "deliveryWindowEnd", value.deliveryWindowEnd]
+  ] as const;
+
+  for (const [startKey, start, endKey, end] of pairs) {
+    if ((start && !end) || (!start && end)) {
+      ctx.addIssue({
+        code: "custom",
+        path: [start ? endKey : startKey],
+        message: "Both start and end are required when a transport window is specified"
+      });
+    }
+    if (start && end && new Date(start).getTime() >= new Date(end).getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        path: [endKey],
+        message: "Transport window end must be after its start"
+      });
+    }
+  }
+});
+
+export const transportEventSchema = z.object({
+  assignmentId: z.string().min(3).max(120),
+  eventType: z.enum([
+    "PICKUP_CONFIRMED",
+    "DELIVERY_CONFIRMED",
+    "EXCEPTION_REPORTED",
+    "RESUME_TRANSIT"
+  ]),
+  notes: z.string().max(6000).optional(),
+  sanitationConfirmed: z.boolean().optional(),
+  custodyAttestation: z.boolean().optional()
+}).superRefine((value, ctx) => {
+  if (value.eventType === "PICKUP_CONFIRMED") {
+    if (value.sanitationConfirmed !== true) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sanitationConfirmed"],
+        message: "Sanitation must be confirmed at pickup"
+      });
+    }
+    if (value.custodyAttestation !== true) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["custodyAttestation"],
+        message: "Chain-of-custody attestation is required at pickup"
+      });
+    }
+  }
+
+  if (
+    value.eventType === "DELIVERY_CONFIRMED" &&
+    value.custodyAttestation !== true
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["custodyAttestation"],
+      message: "Chain-of-custody attestation is required at delivery"
+    });
+  }
+
+  if (
+    value.eventType === "EXCEPTION_REPORTED" &&
+    (value.notes?.trim().length ?? 0) < 10
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["notes"],
+      message: "Transport exceptions require a meaningful description"
+    });
+  }
+});
+
+export type TransportAssignmentInput = z.infer<typeof transportAssignmentSchema>;
+export type TransportEventInput = z.infer<typeof transportEventSchema>;

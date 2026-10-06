@@ -277,7 +277,11 @@ export async function getOrganizationContext(principal: SessionPrincipal) {
     return {
       id: principal.organizationId,
       name: "Prototype organization",
-      type: principal.role.startsWith("SUPPLIER_") ? "FARM" : "RESEARCH_INSTITUTION",
+      type: principal.role.startsWith("SUPPLIER_")
+        ? "FARM"
+        : principal.role === "TRANSPORT_PROVIDER"
+          ? "LOGISTICS"
+          : "RESEARCH_INSTITUTION",
       status: "ACTIVE"
     };
   }

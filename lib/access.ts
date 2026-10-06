@@ -16,6 +16,8 @@ export type Capability =
   | "disclosure:request"
   | "disclosure:ram_review"
   | "disclosure:supplier_review"
+  | "transport:assign"
+  | "transport:update"
   | "operations:manage";
 
 const capabilityPermission: Record<Capability, Permission> = {
@@ -34,6 +36,8 @@ const capabilityPermission: Record<Capability, Permission> = {
   "disclosure:request": "MATCH_REVIEW",
   "disclosure:ram_review": "SOURCE_DISCLOSURE_APPROVE",
   "disclosure:supplier_review": "SOURCE_DISCLOSURE_APPROVE",
+  "transport:assign": "MARKETPLACE_OPERATE",
+  "transport:update": "TRANSPORT_UPDATE",
   "operations:manage": "MARKETPLACE_OPERATE"
 };
 
@@ -89,5 +93,11 @@ export const demoActors = {
     role: "RAM_COMPLIANCE" as const,
     organization: "RAM Corporation",
     organizationId: "demo-ram-organization"
+  },
+  transporter: {
+    name: "Taylor Reed",
+    role: "TRANSPORT_PROVIDER" as const,
+    organization: "RAM Logistics Demo",
+    organizationId: "demo-logistics-organization"
   }
 };

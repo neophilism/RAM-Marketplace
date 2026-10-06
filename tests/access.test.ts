@@ -45,3 +45,12 @@ test("source disclosure authority remains role-separated", () => {
   assert.equal(can("SUPPLIER_STAFF", "disclosure:supplier_review"), false);
   assert.equal(can("RAM_COMPLIANCE", "disclosure:ram_review"), true);
 });
+
+
+test("transport assignment and carrier updates remain role-separated", () => {
+  assert.equal(can("RAM_MARKETPLACE_OPS", "transport:assign"), true);
+  assert.equal(can("RAM_MARKETPLACE_OPS", "transport:update"), false);
+  assert.equal(can("TRANSPORT_PROVIDER", "transport:update"), true);
+  assert.equal(can("TRANSPORT_PROVIDER", "transport:assign"), false);
+  assert.equal(can("RESEARCH_PI", "transport:update"), false);
+});

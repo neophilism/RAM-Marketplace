@@ -33,7 +33,9 @@ The application now includes:
 - separate buyer commitment and RAM acquisition commitment;
 - species-based supplier acquisition policies blind to buyer value;
 - compliance clearance hard gates before pickup;
-- buyer, finance and compliance transaction workspaces;
+- logistics assignment, minimum-necessary carrier packets and chain-of-custody events;
+- pickup, in-transit, transport-exception and delivery workflow;
+- buyer, finance, compliance and transport transaction workspaces;
 - privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session and onboarding tests.
 
 ## Run locally

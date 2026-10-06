@@ -89,3 +89,25 @@ test("failed clearance requires a documented blocking finding", () => {
   });
   assert.equal(withFinding.success, true);
 });
+
+
+test("pickup transport event requires sanitation and custody attestations", async () => {
+  const { transportEventSchema } = await import("../lib/validation");
+  const result = transportEventSchema.safeParse({
+    assignmentId: "TA-001",
+    eventType: "PICKUP_CONFIRMED"
+  });
+  assert.equal(result.success, false);
+});
+
+test("transport exception requires meaningful notes", async () => {
+  const { transportEventSchema } = await import("../lib/validation");
+  assert.equal(
+    transportEventSchema.safeParse({
+      assignmentId: "TA-001",
+      eventType: "EXCEPTION_REPORTED",
+      notes: "short"
+    }).success,
+    false
+  );
+});

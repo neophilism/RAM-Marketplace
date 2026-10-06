@@ -20,6 +20,8 @@ const capabilities: { id: Capability; label: string }[] = [
   { id: "disclosure:request", label: "Request relevant source information" },
   { id: "disclosure:ram_review", label: "Review source requests for relevance" },
   { id: "disclosure:supplier_review", label: "Approve farm source disclosures" },
+  { id: "transport:assign", label: "Assign cleared orders to logistics providers" },
+  { id: "transport:update", label: "Record transport custody and delivery events" },
   { id: "operations:manage", label: "Manage RAM operations" }
 ];
 

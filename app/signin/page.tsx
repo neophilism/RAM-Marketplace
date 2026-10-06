@@ -10,7 +10,8 @@ const demos = [
   { id: "veterinarian", label: "Demo veterinarian", note: "Review and characterize candidate animals" },
   { id: "ram", label: "Demo RAM operations", note: "Operate internal queues and restricted workflows" },
   { id: "finance", label: "Demo RAM finance", note: "Set independent supplier policies and commit acquisitions" },
-  { id: "compliance", label: "Demo RAM compliance", note: "Review restricted source data and clear orders for pickup" }
+  { id: "compliance", label: "Demo RAM compliance", note: "Review restricted source data and clear orders for pickup" },
+  { id: "transporter", label: "Demo transport provider", note: "Receive assigned transport packets and record chain-of-custody events" }
 ];
 
 export default function SignInPage() {
