@@ -70,7 +70,12 @@ export default async function ResearchNeedMatchesPage({
           </details>
 
           <div className="formActions">
-            <Link className="primaryButton" href={"/marketplace/" + match.animalCaseId}>View anonymous animal profile</Link>
+            <Link className="secondaryButton" href={"/marketplace/" + match.animalCaseId}>View anonymous animal profile</Link>
+            <form action="/api/orders/reserve" method="post">
+              <input type="hidden" name="animalCaseId" value={match.animalCaseId} />
+              <input type="hidden" name="researchNeedId" value={id} />
+              <button className="primaryButton" type="submit">Reserve this model</button>
+            </form>
           </div>
         </article>
       ))}
