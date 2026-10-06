@@ -11,7 +11,8 @@ const links = [
   { href: "/ops", label: "RAM Ops" },
   { href: "/finance", label: "Finance" },
   { href: "/compliance", label: "Compliance" },
-  { href: "/transport", label: "Transport" }
+  { href: "/transport", label: "Transport" },
+  { href: "/receiving", label: "Receiving" }
 ];
 
 export function Nav() {

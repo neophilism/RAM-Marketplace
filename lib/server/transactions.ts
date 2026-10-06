@@ -46,6 +46,7 @@ import {
   updatePrototypeOrder,
   updatePrototypeResearchNeed
 } from "@/lib/server/prototype-store";
+import { getPrototypeReceiptInspection } from "@/lib/server/receiving-prototype";
 
 const ACTIVE_ORDER_STATUSES = [
   "DRAFT",
@@ -87,6 +88,9 @@ export interface BuyerOrderDetail extends BuyerOrderSummary {
   acquisitionCommitted: boolean;
   clearanceDecision: string | null;
   clearanceNotes: string | null;
+  receiptDecision: string | null;
+  receiptInspectedAt: string | null;
+  receiptDiscrepancyNotes: string | null;
 }
 
 export interface PricingPolicyView {
@@ -599,7 +603,11 @@ export async function getBuyerOrder(
       buyerCommittedAt: order.buyerCommittedAt ?? null,
       acquisitionCommitted: Boolean(order.acquisitionCommittedAt),
       clearanceDecision: order.clearance?.decision ?? null,
-      clearanceNotes: order.clearance?.notes ?? null
+      clearanceNotes: order.clearance?.notes ?? null,
+      receiptDecision: getPrototypeReceiptInspection(order.id)?.decision ?? null,
+      receiptInspectedAt: getPrototypeReceiptInspection(order.id)?.inspectedAt ?? null,
+      receiptDiscrepancyNotes:
+        getPrototypeReceiptInspection(order.id)?.discrepancyNotes ?? null
     };
   }
 
@@ -642,6 +650,13 @@ export async function getBuyerOrder(
           decision: true,
           notes: true
         }
+      },
+      receivingInspection: {
+        select: {
+          decision: true,
+          inspectedAt: true,
+          discrepancyNotes: true
+        }
       }
     }
   });
@@ -668,7 +683,10 @@ export async function getBuyerOrder(
     buyerCommittedAt: row.buyerCommittedAt?.toISOString() ?? null,
     acquisitionCommitted: Boolean(row.acquisitionCommittedAt),
     clearanceDecision: row.clearance?.decision ?? null,
-    clearanceNotes: row.clearance?.notes ?? null
+    clearanceNotes: row.clearance?.notes ?? null,
+    receiptDecision: row.receivingInspection?.decision ?? null,
+    receiptInspectedAt: row.receivingInspection?.inspectedAt.toISOString() ?? null,
+    receiptDiscrepancyNotes: row.receivingInspection?.discrepancyNotes ?? null
   };
   assertBuyerOrderProjection(projected as unknown as Record<string, unknown>);
   return projected;

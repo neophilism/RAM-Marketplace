@@ -111,3 +111,64 @@ test("transport exception requires meaningful notes", async () => {
     false
   );
 });
+
+
+test("receiving acceptance requires every intake check", async () => {
+  const { receivingInspectionSchema } = await import("../lib/validation");
+  assert.equal(
+    receivingInspectionSchema.safeParse({
+      orderId: "order-1",
+      decision: "ACCEPT",
+      animalIdentityConfirmed: true,
+      movementDocumentsReceived: true,
+      physicalConditionConsistent: false,
+      welfareIntakeAcceptable: true,
+      inspectorAttestation: true
+    }).success,
+    false
+  );
+
+  assert.equal(
+    receivingInspectionSchema.safeParse({
+      orderId: "order-1",
+      decision: "ACCEPT",
+      animalIdentityConfirmed: true,
+      movementDocumentsReceived: true,
+      physicalConditionConsistent: true,
+      welfareIntakeAcceptable: true,
+      inspectorAttestation: true
+    }).success,
+    true
+  );
+});
+
+test("receiving rejection requires a failed check and documented discrepancy", async () => {
+  const { receivingInspectionSchema } = await import("../lib/validation");
+  assert.equal(
+    receivingInspectionSchema.safeParse({
+      orderId: "order-1",
+      decision: "REJECT",
+      animalIdentityConfirmed: true,
+      movementDocumentsReceived: true,
+      physicalConditionConsistent: true,
+      welfareIntakeAcceptable: true,
+      discrepancyNotes: "All checks actually passed, so this cannot be rejected.",
+      inspectorAttestation: true
+    }).success,
+    false
+  );
+
+  assert.equal(
+    receivingInspectionSchema.safeParse({
+      orderId: "order-1",
+      decision: "REJECT",
+      animalIdentityConfirmed: true,
+      movementDocumentsReceived: true,
+      physicalConditionConsistent: false,
+      welfareIntakeAcceptable: true,
+      discrepancyNotes: "Physical condition materially differed from the shipping record.",
+      inspectorAttestation: true
+    }).success,
+    true
+  );
+});

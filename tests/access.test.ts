@@ -54,3 +54,11 @@ test("transport assignment and carrier updates remain role-separated", () => {
   assert.equal(can("TRANSPORT_PROVIDER", "transport:assign"), false);
   assert.equal(can("RESEARCH_PI", "transport:update"), false);
 });
+
+
+test("receiving authority is separated from procurement and transport", () => {
+  assert.equal(can("RESEARCH_COMPLIANCE", "order:receive"), true);
+  assert.equal(can("RESEARCH_PROCUREMENT", "order:receive"), false);
+  assert.equal(can("TRANSPORT_PROVIDER", "order:receive"), false);
+  assert.equal(can("RESEARCH_COMPLIANCE", "order:buyer_commit"), false);
+});

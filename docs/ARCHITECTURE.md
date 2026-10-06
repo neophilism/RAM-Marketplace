@@ -25,7 +25,8 @@ Commercial commitment, legal title and physical custody are distinct concepts in
 2. **Supplier portal** — report bona-fide cull candidates, coordinate veterinary review, upload records, manage disclosure permissions and track sales/payouts.
 3. **Veterinary workspace** — accept assignments, characterize phenotype, attach diagnostics, assess communicability and transport fitness, and escalate welfare/integrity concerns.
 4. **Transport workspace** — receive minimum-necessary pickup/delivery data, record chain of custody, sanitation and incidents.
-5. **RAM operations** — triage, matching, disclosure review, compliance, exceptions, logistics, finance and audit history.
+5. **Receiving workspace** — buyer-institution compliance staff inspect delivered animals and record acceptance or rejection without source-side access.
+6. **RAM operations** — triage, matching, disclosure review, compliance, exceptions, logistics, finance and audit history.
 
 ## Canonical candidate lifecycle
 
@@ -101,7 +102,7 @@ Authorization will combine role permissions with organization, facility, order r
 
 ## Current transactional implementation
 
-The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, compliance clearance, transport assignment, chain-of-custody events and delivery. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
+The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, compliance clearance, transport assignment, chain-of-custody events, delivery and institutional receiving decisions. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
 
 The supplier-acquisition decision surface is intentionally blind to buyer identity and buyer price. Buyer-facing order projections are independently guarded from supplier economics and source identity. See `docs/TRANSACTIONS.md`.
 
@@ -117,9 +118,10 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 8. Matching engine
 9. Reservation/quote/acquisition workflow
 10. Compliance clearance + logistics — implemented through delivery
-11. Receiving acceptance + payment/payout ledger
-12. Audit/security hardening
-13. End-to-end tests and pilot deployment
+11. Receiving acceptance — implemented through `ACCEPTED` / `REJECTED_AT_RECEIPT`
+12. Payment/payout ledger, disputes and settlement
+13. Audit/security hardening
+14. End-to-end tests and pilot deployment
 
 ## Test policy
 

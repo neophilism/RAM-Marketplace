@@ -18,7 +18,7 @@ export default async function OrdersPage() {
         <div>
           <div className="eyebrow">Research procurement</div>
           <h1>Orders & reservations</h1>
-          <p>Track candidate holds, quotes, institutional commitment and RAM clearance without exposing source-farm identity.</p>
+          <p>Track candidate holds, quotes, institutional commitment, clearance, delivery and receiving outcome without exposing source-farm identity.</p>
         </div>
       </div>
 
