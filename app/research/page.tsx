@@ -34,7 +34,7 @@ export default async function ResearchNeedsPage() {
           <div className="emptyState">No research needs yet. Create the first structured model request.</div>
         ) : needs.map((need) => (
           <div className="tableRow" key={need.id}>
-            <div><strong>{need.id}</strong><div className="subtle">{need.title}</div></div>
+            <div><Link href={"/research/" + need.id}><strong>{need.id}</strong></Link><div className="subtle">{need.title}</div></div>
             <span className="status">{need.status}</span>
             <strong>{need.matches}</strong>
             <span>{need.updated}</span>
