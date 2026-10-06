@@ -10,9 +10,15 @@ The committed migration directory is the schema change record.
 
 ## Initial baseline
 
-The first migration is:
+The committed migration history begins with:
 
 `20261006062000_initial`
+
+Identity and access lifecycle support is added by:
+
+`20261006130000_identity_access`
+
+The second migration creates external identity, one-time assertion replay and organization-verification tables, adds the membership status lookup index, and backfills pre-existing organizations with explicit verification records.
 
 Its SQL was generated directly from the Prisma schema with Prisma 7:
 
@@ -125,10 +131,11 @@ The PostgreSQL integration job uses a fresh PostgreSQL 16 service and performs:
 7. full happy-path HTTP E2E against PostgreSQL;
 8. replacement-dispute E2E;
 9. refund-dispute E2E;
-10. `pg_dump` of the populated test database;
-11. restore into a second database;
-12. row-count comparison for critical business/audit tables;
-13. migration-status verification on the restored database.
+10. signed identity/replay/revocation/verified-onboarding lifecycle E2E;
+11. `pg_dump` of the populated test database;
+12. restore into a second database;
+13. row-count comparison for critical business/audit/identity tables;
+14. migration-status verification on the restored database.
 
 This complements the prototype E2E. The two jobs exercise the same application workflow against both storage implementations.
 
