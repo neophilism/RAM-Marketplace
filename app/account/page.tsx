@@ -18,6 +18,7 @@ const capabilities: { id: Capability; label: string }[] = [
   { id: "order:clearance", label: "Perform RAM compliance clearance" },
   { id: "order:receive", label: "Inspect and accept or reject delivered animals" },
   { id: "pricing:manage", label: "Manage supplier pricing policy" },
+  { id: "settlement:manage", label: "Manage buyer payments, supplier payouts and reconciliation" },
   { id: "disclosure:request", label: "Request relevant source information" },
   { id: "disclosure:ram_review", label: "Review source requests for relevance" },
   { id: "disclosure:supplier_review", label: "Approve farm source disclosures" },

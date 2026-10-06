@@ -160,6 +160,20 @@ enum ReceiptDecision {
   REJECTED
 }
 
+enum FinancialSettlementStatus {
+  OPEN
+  SETTLED
+  CLOSED
+}
+
+enum FinancialLedgerEntryType {
+  BUYER_RECEIVABLE
+  SUPPLIER_PAYABLE
+  DIRECT_COST
+  BUYER_PAYMENT
+  SUPPLIER_PAYOUT
+}
+
 model Organization {
   id            String             @id @default(cuid())
   name          String
@@ -478,6 +492,7 @@ model Order {
   disclosureRequests          DisclosureRequest[]
   transportAssignment         TransportAssignment?
   receivingInspection         ReceiptInspection?
+  financialSettlement         FinancialSettlement?
   createdAt                   DateTime     @default(now())
   updatedAt                   DateTime     @updatedAt
 
@@ -586,6 +601,46 @@ model ReceiptInspection {
   updatedAt                   DateTime        @updatedAt
 
   @@index([decision, inspectedAt])
+}
+
+model FinancialSettlement {
+  id                       String                    @id @default(cuid())
+  orderId                  String                    @unique
+  status                   FinancialSettlementStatus @default(OPEN)
+  buyerReceivableCents     Int
+  supplierPayableCents     Int
+  supplierScheduleCents    Int
+  supplierMarketCeilingCents Int
+  directCostsCents         Int
+  grossSpreadCents         Int
+  openedAt                 DateTime                  @default(now())
+  settledAt                DateTime?
+  closedAt                 DateTime?
+  closedByUserId           String?
+  reconciliationReference  String?
+  reconciliationNotes      String?
+  order                    Order                     @relation(fields: [orderId], references: [id])
+  entries                  FinancialLedgerEntry[]
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+
+  @@index([status, openedAt])
+}
+
+model FinancialLedgerEntry {
+  id                String                   @id @default(cuid())
+  settlementId      String
+  type              FinancialLedgerEntryType
+  amountCents       Int
+  externalReference String?
+  notes             String?
+  recordedByUserId  String
+  occurredAt        DateTime                 @default(now())
+  settlement        FinancialSettlement      @relation(fields: [settlementId], references: [id])
+  createdAt         DateTime                 @default(now())
+
+  @@index([settlementId, occurredAt])
+  @@index([type, externalReference])
 }
 
 model AuditEvent {

@@ -37,6 +37,9 @@ The application now includes:
 - pickup, in-transit, transport-exception and delivery workflow;
 - buyer-side receiving inspection with acceptance / rejection at receipt;
 - accepted orders advance the research need into the in-study phase;
+- acquisition-time buyer receivable / supplier payable snapshots;
+- append-only buyer-payment and supplier-payout ledger with partial payments;
+- financial settlement and reconciliation through `SETTLED -> CLOSED`;
 - buyer, finance, compliance, transport and receiving transaction workspaces;
 - privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session and onboarding tests.
 
@@ -59,7 +62,7 @@ npm run db:push
 npm run dev
 ```
 
-See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, and `docs/DEPLOYMENT.md` for environment/deployment details.
+See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, and `docs/DEPLOYMENT.md` for environment/deployment details.
 
 ## Verification
 

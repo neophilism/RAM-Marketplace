@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
 import {
   listFinanceOrders,
   listSupplierPricingPolicies
 } from "@/lib/server/transactions";
+import { listFinancialSettlements } from "@/lib/server/settlements";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +14,10 @@ function money(cents: number) {
 
 export default async function FinancePage() {
   const session = await requireSession();
-  const [orders, policies] = await Promise.all([
+  const [orders, policies, settlements] = await Promise.all([
     listFinanceOrders(session),
-    listSupplierPricingPolicies(session)
+    listSupplierPricingPolicies(session),
+    listFinancialSettlements(session)
   ]);
 
   return (
@@ -57,6 +60,33 @@ export default async function FinancePage() {
             <span>{money(policy.standardizedCullScheduleCents)}</span>
             <span>{money(policy.marketCeilingCents)}</span>
             <span className="status">{policy.active ? "ACTIVE" : "RETIRED"}</span>
+          </div>
+        ))}
+      </div>
+
+      <h2>Financial settlements</h2>
+      <div className="tableCard">
+        <div className="tableRow tableHead"><span>Order</span><span>Buyer / supplier</span><span>Outstanding</span><span>Status</span></div>
+        {settlements.length === 0 ? (
+          <div className="emptyState">No financial settlements yet. A settlement ledger opens automatically when RAM commits a supplier acquisition.</div>
+        ) : settlements.map((settlement) => (
+          <div className="tableRow" key={settlement.id}>
+            <div>
+              <Link href={"/finance/settlements/" + settlement.id}><strong>{settlement.orderId}</strong></Link>
+              <div className="subtle">{settlement.animalCaseId} · {settlement.species}</div>
+            </div>
+            <div>
+              <strong>{money(settlement.buyerReceivableCents)} receivable</strong>
+              <div className="subtle">{money(settlement.supplierPayableCents)} supplier payable · {money(settlement.grossSpreadCents)} gross spread</div>
+            </div>
+            <div>
+              <strong>{money(settlement.buyerOutstandingCents)} buyer</strong>
+              <div className="subtle">{money(settlement.supplierOutstandingCents)} supplier</div>
+            </div>
+            <div>
+              <span className="status">{settlement.settlementStatus}</span>
+              <div className="subtle">order {settlement.orderStatus.replaceAll("_", " ")}</div>
+            </div>
           </div>
         ))}
       </div>

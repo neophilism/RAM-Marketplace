@@ -62,3 +62,11 @@ test("receiving authority is separated from procurement and transport", () => {
   assert.equal(can("TRANSPORT_PROVIDER", "order:receive"), false);
   assert.equal(can("RESEARCH_COMPLIANCE", "order:buyer_commit"), false);
 });
+
+
+test("RAM finance can manage settlements while research and transport roles cannot", () => {
+  assert.equal(can("RAM_FINANCE_ADMIN", "settlement:manage"), true);
+  assert.equal(can("RESEARCH_PROCUREMENT", "settlement:manage"), false);
+  assert.equal(can("RESEARCH_COMPLIANCE", "settlement:manage"), false);
+  assert.equal(can("TRANSPORT_PROVIDER", "settlement:manage"), false);
+});

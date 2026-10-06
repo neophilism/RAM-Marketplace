@@ -172,3 +172,50 @@ test("receiving rejection requires a failed check and documented discrepancy", a
     true
   );
 });
+
+
+test("financial movement requires a positive amount and external reference", async () => {
+  const { financialMovementSchema } = await import("../lib/validation");
+
+  assert.equal(
+    financialMovementSchema.safeParse({
+      settlementId: "FS-001",
+      movementType: "BUYER_PAYMENT",
+      amountUsd: 1000,
+      externalReference: "bank-123"
+    }).success,
+    true
+  );
+
+  assert.equal(
+    financialMovementSchema.safeParse({
+      settlementId: "FS-001",
+      movementType: "SUPPLIER_PAYOUT",
+      amountUsd: 0,
+      externalReference: ""
+    }).success,
+    false
+  );
+});
+
+test("financial reconciliation requires an explicit attestation", async () => {
+  const { settlementCloseSchema } = await import("../lib/validation");
+
+  assert.equal(
+    settlementCloseSchema.safeParse({
+      settlementId: "FS-001",
+      reconciliationReference: "recon-123",
+      reconciliationAttestation: true
+    }).success,
+    true
+  );
+
+  assert.equal(
+    settlementCloseSchema.safeParse({
+      settlementId: "FS-001",
+      reconciliationReference: "recon-123",
+      reconciliationAttestation: false
+    }).success,
+    false
+  );
+});

@@ -385,3 +385,27 @@ export const receivingInspectionSchema = z.object({
 });
 
 export type ReceivingInspectionInput = z.infer<typeof receivingInspectionSchema>;
+
+
+export const financialMovementSchema = z.object({
+  settlementId: z.string().min(3).max(120),
+  movementType: z.enum(["BUYER_PAYMENT", "SUPPLIER_PAYOUT"]),
+  amountUsd: z.coerce.number().positive().max(100_000_000),
+  externalReference: z.string().min(3).max(240),
+  notes: z.string().max(4000).optional()
+});
+
+export const settlementFinalizeSchema = z.object({
+  settlementId: z.string().min(3).max(120)
+});
+
+export const settlementCloseSchema = z.object({
+  settlementId: z.string().min(3).max(120),
+  reconciliationReference: z.string().min(3).max(240),
+  reconciliationNotes: z.string().max(6000).optional(),
+  reconciliationAttestation: z.literal(true)
+});
+
+export type FinancialMovementInput = z.infer<typeof financialMovementSchema>;
+export type SettlementFinalizeInput = z.infer<typeof settlementFinalizeSchema>;
+export type SettlementCloseInput = z.infer<typeof settlementCloseSchema>;

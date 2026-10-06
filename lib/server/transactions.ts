@@ -16,6 +16,8 @@ import {
   requireResearchNeedTransition,
   type ResearchNeedStatus
 } from "@/lib/workflows";
+import { assertFinancialSnapshot } from "@/lib/finance-policy";
+import { calculateGrossSpreadCents } from "@/lib/pricing";
 import {
   calculateIndependentSupplierCommitment,
   countBlockingClearanceFindings,
@@ -46,6 +48,7 @@ import {
   updatePrototypeOrder,
   updatePrototypeResearchNeed
 } from "@/lib/server/prototype-store";
+import { createPrototypeFinancialSettlement } from "@/lib/server/finance-prototype";
 import { getPrototypeReceiptInspection } from "@/lib/server/receiving-prototype";
 
 const ACTIVE_ORDER_STATUSES = [
@@ -1096,6 +1099,29 @@ export async function commitSupplierAcquisition(
     assertOrderTransition("ACQUISITION_COMMITTED", "CLEARANCE_PENDING");
 
     updatePrototypeAnimal(animal.id, { status: "SOLD_TO_RAM" });
+    const buyerReceivableCents = order.buyerPriceCents;
+    if (buyerReceivableCents == null) {
+      throw new Error("Buyer receivable snapshot is missing");
+    }
+    const snapshot = {
+      buyerReceivableCents,
+      supplierPayableCents: supplierAcquisitionCents,
+      supplierScheduleCents: policy.standardizedCullScheduleCents,
+      supplierMarketCeilingCents: policy.marketCeilingCents,
+      directCostsCents: order.directCostsCents
+    };
+    assertFinancialSnapshot(snapshot);
+    createPrototypeFinancialSettlement({
+      orderId: order.id,
+      ...snapshot,
+      grossSpreadCents: calculateGrossSpreadCents(
+        buyerReceivableCents,
+        supplierAcquisitionCents,
+        order.directCostsCents
+      ),
+      actorUserId: principal.userId
+    });
+
     return updatePrototypeOrder(order.id, {
       status: "CLEARANCE_PENDING",
       supplierPricingPolicyId: policy.id,
@@ -1161,6 +1187,23 @@ export async function commitSupplierAcquisition(
     assertCandidateTransition(order.animalCase.status, "SOLD_TO_RAM");
     assertOrderTransition("ACQUISITION_COMMITTED", "CLEARANCE_PENDING");
 
+    if (order.buyerPriceCents == null) {
+      throw new Error("Buyer receivable snapshot is missing");
+    }
+    const financialSnapshot = {
+      buyerReceivableCents: order.buyerPriceCents,
+      supplierPayableCents: supplierAcquisitionCents,
+      supplierScheduleCents: policy.standardizedCullScheduleCents,
+      supplierMarketCeilingCents: policy.marketCeilingCents,
+      directCostsCents: order.directCostsCents
+    };
+    assertFinancialSnapshot(financialSnapshot);
+    const grossSpreadCents = calculateGrossSpreadCents(
+      order.buyerPriceCents,
+      supplierAcquisitionCents,
+      order.directCostsCents
+    );
+
     const now = new Date();
     await tx.order.update({
       where: { id: order.id },
@@ -1189,6 +1232,42 @@ export async function commitSupplierAcquisition(
       }
     });
 
+    const settlement = await tx.financialSettlement.create({
+      data: {
+        orderId: order.id,
+        buyerReceivableCents: order.buyerPriceCents,
+        supplierPayableCents: supplierAcquisitionCents,
+        supplierScheduleCents: policy.standardizedCullScheduleCents,
+        supplierMarketCeilingCents: policy.marketCeilingCents,
+        directCostsCents: order.directCostsCents,
+        grossSpreadCents,
+        entries: {
+          create: [
+            {
+              type: "BUYER_RECEIVABLE",
+              amountCents: order.buyerPriceCents,
+              recordedByUserId: principal.userId,
+              notes: "Buyer receivable snapshotted from committed quote."
+            },
+            {
+              type: "SUPPLIER_PAYABLE",
+              amountCents: supplierAcquisitionCents,
+              recordedByUserId: principal.userId,
+              notes: "Supplier payable fixed from independent acquisition policy."
+            },
+            ...(order.directCostsCents > 0
+              ? [{
+                  type: "DIRECT_COST" as const,
+                  amountCents: order.directCostsCents,
+                  recordedByUserId: principal.userId,
+                  notes: "Direct costs snapshotted at acquisition commitment."
+                }]
+              : [])
+          ]
+        }
+      }
+    });
+
     await tx.auditEvent.createMany({
       data: [
         {
@@ -1206,7 +1285,8 @@ export async function commitSupplierAcquisition(
           metadata: {
             standardizedCullScheduleCents: policy.standardizedCullScheduleCents,
             marketCeilingCents: policy.marketCeilingCents,
-            buyerPriceUsedInSupplierCalculation: false
+            buyerPriceUsedInSupplierCalculation: false,
+            financialSettlementId: settlement.id
           }
         },
         {
