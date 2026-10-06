@@ -29,7 +29,10 @@ export default async function OpsPage() {
         <Link className="secondaryButton" href="/ops/logistics">Transport & chain of custody</Link>
         <Link className="secondaryButton" href="/ops/disputes">Receiving disputes</Link>
         {can(session.role, "audit:read") ? (
-          <Link className="secondaryButton" href="/ops/audit">Global audit explorer</Link>
+          <>
+            <Link className="secondaryButton" href="/ops/audit">Global audit explorer</Link>
+            <Link className="secondaryButton" href="/ops/pilot">Pilot readiness</Link>
+          </>
         ) : null}
       </div>
 

@@ -122,8 +122,9 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 12. Payment/payout ledger, settlement and reconciliation — implemented
 13. Rejected-receipt disputes, replacements, credits and refunds — implemented
 14. Audit/security hardening — implemented at application boundary
-15. End-to-end tests, production integrations and pilot deployment
+15. Live multi-role end-to-end tests and pilot-readiness tooling — implemented
+16. Production integrations, reviewed migrations and pilot deployment
 
 ## Test policy
 
-CI protects non-negotiable business rules, not just UI compilation. Current tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, baseline RBAC separation, restricted-source authorization and marketplace anonymization.
+CI protects non-negotiable business rules, not just UI compilation. Unit/domain/security tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, RBAC separation, restricted-source authorization, marketplace anonymization and append-only records. After the production build, CI launches the built application in isolated prototype mode and drives live HTTP scenarios across supplier, researcher, veterinary, RAM operations, procurement, finance, compliance, transport and receiving roles. See `docs/PILOT.md`.
