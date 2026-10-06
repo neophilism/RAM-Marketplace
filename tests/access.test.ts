@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { can, requireCapability } from "@/lib/access";
+import { can, requireCapability } from "../lib/access";
 
 describe("role access", () => {
   it("does not permit researchers to read restricted source records", () => {
