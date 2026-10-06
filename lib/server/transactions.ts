@@ -99,8 +99,6 @@ export interface FinanceOrderSummary {
   animalCaseId: string;
   species: string;
   condition: string;
-  buyerOrganizationName: string;
-  buyerPriceCents: number;
   status: string;
   pricingPolicy: PricingPolicyView | null;
 }
@@ -977,8 +975,6 @@ export async function listFinanceOrders(
           animalCaseId: order.animalCaseId,
           species: animal?.species ?? "Unknown",
           condition: animal?.condition ?? "Unknown",
-          buyerOrganizationName: "Prototype research organization",
-          buyerPriceCents: order.buyerPriceCents ?? 0,
           status: order.status,
           pricingPolicy: policy
             ? {
@@ -1002,8 +998,6 @@ export async function listFinanceOrders(
       id: true,
       animalCaseId: true,
       status: true,
-      buyerPriceCents: true,
-      buyerOrganization: { select: { name: true } },
       animalCase: { select: { species: true, condition: true } }
     }
   });
@@ -1023,8 +1017,6 @@ export async function listFinanceOrders(
       animalCaseId: row.animalCaseId,
       species: row.animalCase.species,
       condition: row.animalCase.condition,
-      buyerOrganizationName: row.buyerOrganization.name,
-      buyerPriceCents: row.buyerPriceCents ?? 0,
       status: row.status,
       pricingPolicy: policy
         ? {
