@@ -142,3 +142,8 @@ textarea { resize: vertical; }
 .capabilityList .allowed { color: var(--green); }
 .capabilityList .denied { color: #9aa39d; }
 @media (max-width: 720px) { .roleGrid { grid-template-columns: 1fr; } }
+
+.demoGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 18px; }
+.demoCard { display: grid; gap: 10px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #fbfcfa; }
+.demoCard > span { color: var(--muted); font-size: 13px; line-height: 1.5; min-height: 40px; }
+@media (max-width: 720px) { .demoGrid { grid-template-columns: 1fr; } }
