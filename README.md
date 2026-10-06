@@ -52,3 +52,5 @@ The second build phase adds:
 - expanded CI including privacy/RBAC tests.
 
 The prototype transaction store is intentionally temporary. The schema is PostgreSQL-ready; durable database wiring, migrations and production authentication follow once the deployment environment is provisioned.
+
+- Farm intake now records the pre-existing cull decision date, planned cull date, cull reason and an independent-cull attestation so the platform preserves cull-first provenance.
