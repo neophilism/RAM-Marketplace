@@ -13,8 +13,11 @@ export interface PrototypeAnimalCase {
   ageMonths?: number;
   condition: string;
   diseaseStage?: string;
+  etiology?: string;
   diagnosticConfidence?: string;
   phenotype: string[];
+  comorbidities: string[];
+  diagnosticEvidence: string[];
   publicSummary: string;
   status: string;
   action: string;
@@ -94,6 +97,8 @@ export function savePrototypeAnimal(input: AnimalSubmissionInput) {
     condition: input.condition,
     diseaseStage: input.diseaseStage,
     phenotype: [],
+    comorbidities: [],
+    diagnosticEvidence: [],
     publicSummary: "Submitted for RAM veterinary characterization; not yet marketable.",
     status: "SUBMITTED",
     action: "Awaiting RAM pre-screen",
