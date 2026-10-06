@@ -1,5 +1,3 @@
-import type { AnimalCaseStatus } from "@/lib/domain";
-
 export type ResearchNeedStatus =
   | "DRAFT"
   | "SUBMITTED"
@@ -12,23 +10,6 @@ export type ResearchNeedStatus =
   | "IN_STUDY"
   | "COMPLETED"
   | "CLOSED";
-
-const animalTransitions: Record<AnimalCaseStatus, readonly AnimalCaseStatus[]> = {
-  DRAFT: ["SUBMITTED"],
-  SUBMITTED: ["TRIAGE", "DRAFT"],
-  TRIAGE: ["VET_REVIEW", "CLOSED"],
-  VET_REVIEW: ["DIAGNOSTICS", "VERIFIED", "CLOSED"],
-  DIAGNOSTICS: ["VET_REVIEW", "VERIFIED", "CLOSED"],
-  VERIFIED: ["AVAILABLE", "CLOSED"],
-  AVAILABLE: ["RESERVED", "CLOSED"],
-  RESERVED: ["AVAILABLE", "RESEARCH_CLEARANCE", "CLOSED"],
-  RESEARCH_CLEARANCE: ["RESERVED", "CONTRACTED", "CLOSED"],
-  CONTRACTED: ["IN_TRANSIT", "ACTIVE_STUDY", "CLOSED"],
-  IN_TRANSIT: ["ACTIVE_STUDY", "CLOSED"],
-  ACTIVE_STUDY: ["COMPLETED", "CLOSED"],
-  COMPLETED: ["CLOSED"],
-  CLOSED: []
-};
 
 const researchTransitions: Record<ResearchNeedStatus, readonly ResearchNeedStatus[]> = {
   DRAFT: ["SUBMITTED"],
@@ -44,18 +25,8 @@ const researchTransitions: Record<ResearchNeedStatus, readonly ResearchNeedStatu
   CLOSED: []
 };
 
-export function canTransitionAnimal(from: AnimalCaseStatus, to: AnimalCaseStatus) {
-  return animalTransitions[from].includes(to);
-}
-
 export function canTransitionResearchNeed(from: ResearchNeedStatus, to: ResearchNeedStatus) {
   return researchTransitions[from].includes(to);
-}
-
-export function requireAnimalTransition(from: AnimalCaseStatus, to: AnimalCaseStatus) {
-  if (!canTransitionAnimal(from, to)) {
-    throw new Error(`Invalid animal case transition: ${from} -> ${to}`);
-  }
 }
 
 export function requireResearchNeedTransition(from: ResearchNeedStatus, to: ResearchNeedStatus) {
