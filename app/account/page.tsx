@@ -12,6 +12,11 @@ const capabilities: { id: Capability; label: string }[] = [
   { id: "source:approve_disclosure", label: "Approve source disclosure" },
   { id: "research_need:create", label: "Create research needs" },
   { id: "match:review", label: "Review scientific matches" },
+  { id: "order:reserve", label: "Reserve matched animal models" },
+  { id: "order:buyer_commit", label: "Commit organization to buyer quote" },
+  { id: "order:acquisition_commit", label: "Commit RAM supplier acquisition" },
+  { id: "order:clearance", label: "Perform RAM compliance clearance" },
+  { id: "pricing:manage", label: "Manage supplier pricing policy" },
   { id: "operations:manage", label: "Manage RAM operations" }
 ];
 
