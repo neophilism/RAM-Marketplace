@@ -5,6 +5,7 @@ import {
   toMarketplaceListing
 } from "@/lib/marketplace-projection";
 import { dataBackend, requirePrisma } from "@/lib/server/db";
+import { expireStaleHolds } from "@/lib/server/transactions";
 import { restrictedAnimalRecords } from "@/lib/server/restricted-demo-data";
 
 function confidence(value: string | null): AnimalListing["diagnosticConfidence"] {
@@ -25,6 +26,8 @@ function ageLabel(months: number | null) {
 }
 
 export async function getMarketplaceListings(): Promise<AnimalListing[]> {
+  await expireStaleHolds();
+
   if (dataBackend() === "prototype") {
     return restrictedAnimalRecords.map((record) => {
       const listing = toMarketplaceListing(record);
