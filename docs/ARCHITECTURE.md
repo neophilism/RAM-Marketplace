@@ -102,7 +102,7 @@ Authorization will combine role permissions with organization, facility, order r
 
 ## Current transactional implementation
 
-The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, acquisition-time financial obligations, compliance clearance, transport assignment, chain-of-custody events, delivery, institutional receiving decisions, rejected-receipt disputes, buyer credits/refunds, payment/payout ledger entries, settlement and financial reconciliation. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
+The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, acquisition-time financial obligations, compliance clearance, transport assignment, chain-of-custody events, delivery, institutional receiving decisions, rejected-receipt disputes, buyer credits/refunds, payment/payout ledger entries, settlement and financial reconciliation. The application boundary now also enforces same-origin unsafe requests, request-size limits, anonymous-entry throttling, browser security headers and super-admin audit exploration. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
 
 The supplier-acquisition decision surface is intentionally blind to buyer identity and buyer price. Buyer-facing order projections are independently guarded from supplier economics and source identity. See `docs/TRANSACTIONS.md`.
 
@@ -121,8 +121,8 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 11. Receiving acceptance — implemented through `ACCEPTED` / `REJECTED_AT_RECEIPT`
 12. Payment/payout ledger, settlement and reconciliation — implemented
 13. Rejected-receipt disputes, replacements, credits and refunds — implemented
-14. Audit/security hardening
-15. End-to-end tests and pilot deployment
+14. Audit/security hardening — implemented at application boundary
+15. End-to-end tests, production integrations and pilot deployment
 
 ## Test policy
 

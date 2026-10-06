@@ -2,10 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { attachSession, demoAuthEnabled } from "@/lib/auth/session";
 import { demoActors } from "@/lib/access";
 import { landingPageForRole } from "@/lib/onboarding";
+import {
+  enforceRequestRateLimit,
+  RateLimitExceededError
+} from "@/lib/server/rate-limit";
 
 export async function POST(request: NextRequest) {
   if (!demoAuthEnabled()) {
     return NextResponse.json({ error: "Demo authentication is disabled" }, { status: 403 });
+  }
+
+  try {
+    await enforceRequestRateLimit(request, {
+      action: "demo_session",
+      limit: 120,
+      windowSeconds: 600
+    });
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { "Retry-After": String(error.retryAfterSeconds) }
+        }
+      );
+    }
+    throw error;
   }
 
   const form = await request.formData();

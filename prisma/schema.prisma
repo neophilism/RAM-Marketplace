@@ -681,6 +681,21 @@ model FinancialLedgerEntry {
   @@index([type, externalReference])
 }
 
+model SecurityRateLimitBucket {
+  id          String   @id @default(cuid())
+  keyHash     String
+  action      String
+  windowStart DateTime
+  expiresAt   DateTime
+  count       Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([keyHash, action, windowStart])
+  @@index([expiresAt])
+  @@index([action, windowStart])
+}
+
 model AuditEvent {
   id             String   @id @default(cuid())
   actorUserId    String?
@@ -698,4 +713,6 @@ model AuditEvent {
 
   @@index([entityType, entityId, createdAt])
   @@index([organizationId, createdAt])
+  @@index([action, createdAt])
+  @@index([actorUserId, createdAt])
 }

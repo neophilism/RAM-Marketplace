@@ -5,6 +5,10 @@ import {
   onboardingSchema
 } from "@/lib/onboarding";
 import { createOnboardingAccount } from "@/lib/server/onboarding";
+import {
+  enforceRequestRateLimit,
+  RateLimitExceededError
+} from "@/lib/server/rate-limit";
 
 function blankToUndefined(value: FormDataEntryValue | null) {
   return typeof value === "string" && value.trim() !== "" ? value : undefined;
@@ -16,6 +20,25 @@ export async function POST(request: NextRequest) {
       { error: "Public onboarding is disabled on this deployment" },
       { status: 403 }
     );
+  }
+
+  try {
+    await enforceRequestRateLimit(request, {
+      action: "public_onboarding",
+      limit: 5,
+      windowSeconds: 3600
+    });
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 429,
+          headers: { "Retry-After": String(error.retryAfterSeconds) }
+        }
+      );
+    }
+    throw error;
   }
 
   const form = await request.formData();

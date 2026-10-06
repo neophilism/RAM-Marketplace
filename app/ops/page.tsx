@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { can } from "@/lib/access";
 import { requireSession } from "@/lib/auth/session";
 import {
   listOpsCandidateQueue,
@@ -27,6 +28,9 @@ export default async function OpsPage() {
       <div className="formActions">
         <Link className="secondaryButton" href="/ops/logistics">Transport & chain of custody</Link>
         <Link className="secondaryButton" href="/ops/disputes">Receiving disputes</Link>
+        {can(session.role, "audit:read") ? (
+          <Link className="secondaryButton" href="/ops/audit">Global audit explorer</Link>
+        ) : null}
       </div>
 
       <div className="metricGrid">
