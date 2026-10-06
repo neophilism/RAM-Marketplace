@@ -92,8 +92,11 @@ function toMatchAnimal(row: {
   ageMonths: number | null;
   condition: string;
   diseaseStage: string | null;
+  etiology: string | null;
   diagnosticConfidence: string | null;
   phenotype: unknown;
+  comorbidities: unknown;
+  diagnosticEvidence: unknown;
   publicSummary: string;
   listPriceCents: number | null;
   transportReady: boolean;
@@ -107,8 +110,11 @@ function toMatchAnimal(row: {
     ageMonths: row.ageMonths,
     condition: row.condition,
     diseaseStage: row.diseaseStage,
+    etiology: row.etiology,
     diagnosticConfidence: row.diagnosticConfidence,
     phenotype: jsonStrings(row.phenotype),
+    comorbidities: jsonStrings(row.comorbidities),
+    diagnosticEvidence: jsonStrings(row.diagnosticEvidence),
     publicSummary: row.publicSummary,
     listPriceCents: row.listPriceCents,
     transportReady: row.transportReady,
@@ -125,6 +131,7 @@ function toMatchNeed(row: {
   maxAgeMonths: number | null;
   sex: string | null;
   diseaseStage: string | null;
+  etiologyRequirement: string | null;
   requiredPhenotype: string;
   exclusionCriteria: string | null;
   acceptableComorbidities: string | null;
@@ -141,6 +148,7 @@ function toMatchNeed(row: {
     maxAgeMonths: row.maxAgeMonths,
     sex: row.sex,
     diseaseStage: row.diseaseStage,
+    etiologyRequirement: row.etiologyRequirement,
     requiredPhenotype: row.requiredPhenotype,
     exclusionCriteria: row.exclusionCriteria,
     acceptableComorbidities: row.acceptableComorbidities,
@@ -161,8 +169,11 @@ function prototypeMatchAnimal(id: string): MatchAnimal {
     ageMonths: animal.ageMonths,
     condition: animal.condition,
     diseaseStage: animal.diseaseStage,
+    etiology: animal.etiology,
     diagnosticConfidence: animal.diagnosticConfidence,
     phenotype: animal.phenotype,
+    comorbidities: animal.comorbidities,
+    diagnosticEvidence: animal.diagnosticEvidence,
     publicSummary: animal.publicSummary,
     listPriceCents: animal.listPriceCents,
     transportReady: animal.transportReady,
@@ -182,6 +193,7 @@ function prototypeMatchNeed(id: string): MatchNeed {
     maxAgeMonths: need.input.maxAgeMonths,
     sex: need.input.sex,
     diseaseStage: need.input.diseaseStage,
+    etiologyRequirement: need.input.etiologyRequirement,
     requiredPhenotype: need.input.requiredPhenotype,
     exclusionCriteria: need.input.exclusionCriteria,
     acceptableComorbidities: need.input.acceptableComorbidities,
@@ -221,8 +233,11 @@ async function refreshMatchesForNeed(researchNeedId: string) {
       ageMonths: true,
       condition: true,
       diseaseStage: true,
+      etiology: true,
       diagnosticConfidence: true,
       phenotype: true,
+      comorbidities: true,
+      diagnosticEvidence: true,
       publicSummary: true,
       listPriceCents: true,
       transportReady: true,
@@ -282,8 +297,11 @@ async function refreshMatchesForAnimal(animalCaseId: string) {
       ageMonths: true,
       condition: true,
       diseaseStage: true,
+      etiology: true,
       diagnosticConfidence: true,
       phenotype: true,
+      comorbidities: true,
+      diagnosticEvidence: true,
       publicSummary: true,
       listPriceCents: true,
       transportReady: true,
@@ -536,8 +554,11 @@ export async function submitVeterinaryReview(
     return updatePrototypeAnimal(input.animalCaseId, {
       status: nextStatus,
       diseaseStage: input.diseaseStage ?? animal.diseaseStage,
+      etiology: input.etiology ?? animal.etiology,
       diagnosticConfidence: input.diagnosticConfidence ?? animal.diagnosticConfidence,
       phenotype: input.phenotype ? phenotypeLines(input.phenotype) : animal.phenotype,
+      comorbidities: input.comorbidities ? phenotypeLines(input.comorbidities) : animal.comorbidities,
+      diagnosticEvidence: input.diagnosticEvidence ? phenotypeLines(input.diagnosticEvidence) : animal.diagnosticEvidence,
       publicSummary: input.publicSummary ?? animal.publicSummary,
       transportReady: input.transportReady ?? animal.transportReady,
       veterinaryReview: input,
@@ -575,8 +596,11 @@ export async function submitVeterinaryReview(
         welfareNotes: input.welfareNotes,
         diagnosticPlan: input.diagnosticPlan,
         diseaseStage: input.diseaseStage,
+        etiology: input.etiology,
         diagnosticConfidence: input.diagnosticConfidence,
         phenotype: input.phenotype ? phenotypeLines(input.phenotype) : undefined,
+        comorbidities: input.comorbidities ? phenotypeLines(input.comorbidities) : undefined,
+        diagnosticEvidence: input.diagnosticEvidence ? phenotypeLines(input.diagnosticEvidence) : undefined,
         publicSummary: input.publicSummary,
         transportReady: input.transportReady,
         reviewedAt: new Date()
@@ -588,8 +612,11 @@ export async function submitVeterinaryReview(
       data: {
         status: nextStatus,
         diseaseStage: input.diseaseStage ?? undefined,
+        etiology: input.etiology ?? undefined,
         diagnosticConfidence: input.diagnosticConfidence ?? undefined,
         phenotype: input.phenotype ? phenotypeLines(input.phenotype) : undefined,
+        comorbidities: input.comorbidities ? phenotypeLines(input.comorbidities) : undefined,
+        diagnosticEvidence: input.diagnosticEvidence ? phenotypeLines(input.diagnosticEvidence) : undefined,
         publicSummary: input.publicSummary ?? undefined,
         transportReady: input.transportReady ?? undefined
       }
@@ -899,8 +926,11 @@ export async function getOpsCandidate(
       condition: animal.condition,
       status: animal.status,
       diseaseStage: animal.diseaseStage,
+      etiology: animal.etiology,
       diagnosticConfidence: animal.diagnosticConfidence,
       phenotype: animal.phenotype,
+      comorbidities: animal.comorbidities,
+      diagnosticEvidence: animal.diagnosticEvidence,
       publicSummary: animal.publicSummary,
       transportReady: animal.transportReady
     };
@@ -915,8 +945,11 @@ export async function getOpsCandidate(
       condition: true,
       status: true,
       diseaseStage: true,
+      etiology: true,
       diagnosticConfidence: true,
       phenotype: true,
+      comorbidities: true,
+      diagnosticEvidence: true,
       publicSummary: true,
       transportReady: true
     }
@@ -928,8 +961,11 @@ export async function getOpsCandidate(
     condition: row.condition,
     status: row.status,
     diseaseStage: row.diseaseStage,
+    etiology: row.etiology,
     diagnosticConfidence: row.diagnosticConfidence,
     phenotype: jsonStrings(row.phenotype),
+    comorbidities: jsonStrings(row.comorbidities),
+    diagnosticEvidence: jsonStrings(row.diagnosticEvidence),
     publicSummary: row.publicSummary,
     transportReady: row.transportReady
   };
