@@ -26,12 +26,17 @@ export default async function OpsCandidatePage({
         <h2>Verified scientific record</h2>
         <dl>
           <div><dt>Disease stage</dt><dd>{candidate.diseaseStage ?? "Not specified"}</dd></div>
+          <div><dt>Etiology</dt><dd>{candidate.etiology ?? "Not characterized"}</dd></div>
           <div><dt>Diagnostic confidence</dt><dd>{candidate.diagnosticConfidence ?? "Not specified"}</dd></div>
           <div><dt>Transport ready</dt><dd>{candidate.transportReady ? "Yes" : "No / unresolved"}</dd></div>
           <div><dt>Public summary</dt><dd>{candidate.publicSummary}</dd></div>
         </dl>
         <h3>Phenotype</h3>
         <ul>{candidate.phenotype.map((item) => <li key={item}>{item}</li>)}</ul>
+        <h3>Diagnostic evidence</h3>
+        <ul>{candidate.diagnosticEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
+        <h3>Comorbidities</h3>
+        <ul>{candidate.comorbidities.map((item) => <li key={item}>{item}</li>)}</ul>
       </article>
 
       {candidate.status === "VERIFIED" ? (
