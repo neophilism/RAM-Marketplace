@@ -1,11 +1,56 @@
-export type AnimalCaseStatus =
-  | "DRAFT" | "SUBMITTED" | "TRIAGE" | "VET_REVIEW" | "DIAGNOSTICS"
-  | "VERIFIED" | "AVAILABLE" | "RESERVED" | "RESEARCH_CLEARANCE"
-  | "CONTRACTED" | "IN_TRANSIT" | "ACTIVE_STUDY" | "COMPLETED" | "CLOSED";
+export const CANDIDATE_STATUSES = [
+  "DRAFT",
+  "SUBMITTED",
+  "PRE_SCREENED",
+  "VET_PENDING",
+  "VERIFIED",
+  "MATCHABLE",
+  "RESERVED",
+  "SOLD_TO_RAM",
+  "TRANSFERRED",
+  "WITHDRAWN",
+  "CULLED",
+  "EXPIRED",
+  "INELIGIBLE",
+  "QUARANTINED",
+  "SUSPENDED"
+] as const;
 
-export type DisclosureTier =
-  | "PUBLIC_ANONYMIZED" | "REQUESTABLE" | "POST_RESERVATION"
-  | "POST_PURCHASE" | "RAM_INTERNAL_ONLY";
+export type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
+
+export const ORDER_STATUSES = [
+  "DRAFT",
+  "CANDIDATE_HELD",
+  "CHECKOUT_PENDING",
+  "BUYER_COMMITTED",
+  "ACQUISITION_COMMITTED",
+  "CLEARANCE_PENDING",
+  "READY_FOR_PICKUP",
+  "IN_TRANSIT",
+  "DELIVERED",
+  "ACCEPTED",
+  "SETTLED",
+  "CLOSED",
+  "EXPIRED",
+  "CLEARANCE_FAILED",
+  "SUPPLIER_WITHDRAWN",
+  "BUYER_CANCELLED",
+  "TRANSPORT_EXCEPTION",
+  "REJECTED_AT_RECEIPT",
+  "DISPUTED"
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export const DISCLOSURE_TIERS = [
+  "PUBLIC_ANONYMIZED",
+  "REQUESTABLE",
+  "POST_RESERVATION",
+  "POST_PURCHASE",
+  "RAM_INTERNAL_ONLY"
+] as const;
+
+export type DisclosureTier = (typeof DISCLOSURE_TIERS)[number];
 
 export interface AnimalListing {
   id: string;
@@ -28,12 +73,11 @@ export interface AnimalListing {
 }
 
 export const MATCH_WEIGHTS = {
-  phenotype: 30,
-  etiology: 20,
-  stage: 15,
-  diagnostics: 10,
-  comorbidities: 10,
-  demographics: 5,
-  logistics: 5,
-  studyFit: 5
+  phenotypeFit: 30,
+  diagnosticConfidence: 20,
+  etiologyFit: 15,
+  comorbidityFit: 10,
+  timingAvailability: 10,
+  logisticsFit: 10,
+  priceFit: 5
 } as const;

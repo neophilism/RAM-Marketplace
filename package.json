@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "prisma:validate": "prisma validate"
   },
   "dependencies": {
     "next": "^16.0.0",
@@ -19,6 +21,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "prisma": "^7.0.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
