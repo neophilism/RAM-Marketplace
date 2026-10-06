@@ -32,6 +32,7 @@ export default async function OpsPage() {
           <>
             <Link className="secondaryButton" href="/ops/audit">Global audit explorer</Link>
             <Link className="secondaryButton" href="/ops/pilot">Pilot readiness</Link>
+            <Link className="secondaryButton" href="/ops/access">Identity & access</Link>
           </>
         ) : null}
       </div>
