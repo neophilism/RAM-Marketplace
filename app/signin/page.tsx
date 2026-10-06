@@ -7,6 +7,7 @@ const demos = [
   { id: "farmer", label: "Demo farm owner", note: "Submit and manage anonymous animal cases" },
   { id: "scientist", label: "Demo researcher", note: "Browse models, create research needs and reserve matched animals" },
   { id: "procurement", label: "Demo research procurement", note: "Approve buyer quotes and commit the research organization" },
+  { id: "receiver", label: "Demo research receiving", note: "Inspect delivered animals and accept or reject institutional intake" },
   { id: "veterinarian", label: "Demo veterinarian", note: "Review and characterize candidate animals" },
   { id: "ram", label: "Demo RAM operations", note: "Operate internal queues and restricted workflows" },
   { id: "finance", label: "Demo RAM finance", note: "Set independent supplier policies and commit acquisitions" },

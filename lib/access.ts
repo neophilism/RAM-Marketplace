@@ -12,6 +12,7 @@ export type Capability =
   | "order:buyer_commit"
   | "order:acquisition_commit"
   | "order:clearance"
+  | "order:receive"
   | "pricing:manage"
   | "disclosure:request"
   | "disclosure:ram_review"
@@ -32,6 +33,7 @@ const capabilityPermission: Record<Capability, Permission> = {
   "order:buyer_commit": "QUOTE_APPROVE",
   "order:acquisition_commit": "PAYOUT_MANAGE",
   "order:clearance": "COMPLIANCE_REVIEW",
+  "order:receive": "RECEIVING_INSPECTION",
   "pricing:manage": "PRICING_POLICY_MANAGE",
   "disclosure:request": "MATCH_REVIEW",
   "disclosure:ram_review": "SOURCE_DISCLOSURE_APPROVE",
@@ -61,6 +63,12 @@ export const demoActors = {
   procurement: {
     name: "Avery Brooks",
     role: "RESEARCH_PROCUREMENT" as const,
+    organization: "Example Translational Sciences Lab",
+    organizationId: "demo-research-organization"
+  },
+  receiver: {
+    name: "Dr. Morgan Lee",
+    role: "RESEARCH_COMPLIANCE" as const,
     organization: "Example Translational Sciences Lab",
     organizationId: "demo-research-organization"
   },

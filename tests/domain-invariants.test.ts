@@ -108,4 +108,6 @@ test("RBAC separates supplier, research, compliance, transport and finance power
   assert.equal(hasPermission("TRANSPORT_PROVIDER", "RESEARCH_REQUEST_MANAGE"), false);
   assert.equal(hasPermission("RAM_COMPLIANCE", "COMPLIANCE_OVERRIDE"), true);
   assert.equal(hasPermission("RAM_FINANCE_ADMIN", "PRICING_POLICY_MANAGE"), true);
+  assert.equal(hasPermission("RESEARCH_COMPLIANCE", "RECEIVING_INSPECTION"), true);
+  assert.equal(hasPermission("RESEARCH_PROCUREMENT", "RECEIVING_INSPECTION"), false);
 });

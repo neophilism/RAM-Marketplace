@@ -55,6 +55,8 @@ export default async function OrderPage({
             <div><dt>Buyer commitment</dt><dd>{order.buyerCommittedAt ? new Date(order.buyerCommittedAt).toLocaleString() : "Pending"}</dd></div>
             <div><dt>RAM acquisition</dt><dd>{order.acquisitionCommitted ? "Committed" : "Pending"}</dd></div>
             <div><dt>Clearance</dt><dd>{order.clearanceDecision ?? "Not started"}</dd></div>
+            <div><dt>Receiving decision</dt><dd>{order.receiptDecision ?? "Pending delivery / inspection"}</dd></div>
+            <div><dt>Receiving inspected</dt><dd>{order.receiptInspectedAt ? new Date(order.receiptInspectedAt).toLocaleString() : "Pending"}</dd></div>
           </dl>
         </article>
       </div>
@@ -106,6 +108,28 @@ export default async function OrderPage({
           <strong>Cleared for pickup.</strong>
           <span>Commercial and compliance gates are complete. Transport workflow is the next phase.</span>
         </div>
+      )}
+
+      {order.status === "DELIVERED" && (
+        <div className="privacyBanner">
+          <strong>Delivered to receiving facility.</strong>
+          <span>Carrier handoff is complete. The institution&apos;s receiving/compliance role must separately inspect and accept or reject intake.</span>
+        </div>
+      )}
+
+      {order.status === "ACCEPTED" && (
+        <div className="privacyBanner">
+          <strong>Institutional intake accepted.</strong>
+          <span>The receiving inspection passed and the associated research need may enter its in-study phase.</span>
+        </div>
+      )}
+
+      {order.status === "REJECTED_AT_RECEIPT" && (
+        <article className="panel">
+          <h2>Rejected at receipt</h2>
+          <p>{order.receiptDiscrepancyNotes ?? "The receiving inspection documented a blocking discrepancy."}</p>
+          <p className="finePrint">The research need remains unstarted while the rejection proceeds to later dispute/replacement/refund handling.</p>
+        </article>
       )}
 
       {order.status === "CLEARANCE_FAILED" && (

@@ -43,3 +43,13 @@ test("supplier acquisition decision surface rejects buyer value signals", () => 
     /Supplier acquisition decision privacy boundary/
   );
 });
+
+
+test("buyer and receiving projections reject source pickup aliases", () => {
+  for (const key of ["pickupAddress", "pickupContactName", "pickupContactEmail"]) {
+    assert.throws(
+      () => assertBuyerOrderProjection({ id: "order-1", [key]: "restricted" }),
+      /privacy boundary violated/
+    );
+  }
+});

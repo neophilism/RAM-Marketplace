@@ -327,3 +327,61 @@ export const transportEventSchema = z.object({
 
 export type TransportAssignmentInput = z.infer<typeof transportAssignmentSchema>;
 export type TransportEventInput = z.infer<typeof transportEventSchema>;
+
+
+export const receivingInspectionSchema = z.object({
+  orderId: z.string().min(3).max(120),
+  decision: z.enum(["ACCEPT", "REJECT"]),
+  animalIdentityConfirmed: z.boolean(),
+  movementDocumentsReceived: z.boolean(),
+  physicalConditionConsistent: z.boolean(),
+  welfareIntakeAcceptable: z.boolean(),
+  discrepancyNotes: z.string().max(6000).optional(),
+  notes: z.string().max(6000).optional(),
+  inspectorAttestation: z.literal(true)
+}).superRefine((value, ctx) => {
+  const checks = [
+    ["animalIdentityConfirmed", value.animalIdentityConfirmed],
+    ["movementDocumentsReceived", value.movementDocumentsReceived],
+    ["physicalConditionConsistent", value.physicalConditionConsistent],
+    ["welfareIntakeAcceptable", value.welfareIntakeAcceptable]
+  ] as const;
+
+  if (value.decision === "ACCEPT") {
+    for (const [field, confirmed] of checks) {
+      if (!confirmed) {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: "Every receiving check must pass before acceptance"
+        });
+      }
+    }
+    if (value.discrepancyNotes?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discrepancyNotes"],
+        message: "An accepted receipt cannot contain blocking discrepancies"
+      });
+    }
+  }
+
+  if (value.decision === "REJECT") {
+    if (checks.every(([, confirmed]) => confirmed)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["decision"],
+        message: "A rejected receipt must identify at least one failed receiving check"
+      });
+    }
+    if ((value.discrepancyNotes?.trim().length ?? 0) < 20) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discrepancyNotes"],
+        message: "A rejected receipt requires documented discrepancies"
+      });
+    }
+  }
+});
+
+export type ReceivingInspectionInput = z.infer<typeof receivingInspectionSchema>;

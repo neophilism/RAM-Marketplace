@@ -29,6 +29,7 @@ export const config = {
     "/ops/:path*",
     "/finance/:path*",
     "/compliance/:path*",
-    "/transport/:path*"
+    "/transport/:path*",
+    "/receiving/:path*"
   ]
 };

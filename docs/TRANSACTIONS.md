@@ -84,6 +84,28 @@ Failed review:
 
 Blocking findings and reviewer identity are persisted.
 
+## Logistics and receiving
+
+After clearance, RAM operations assigns a transport provider. Carrier custody proceeds through:
+
+`READY_FOR_PICKUP -> IN_TRANSIT -> DELIVERED`
+
+with `TRANSPORT_EXCEPTION` as the controlled exception state.
+
+Carrier delivery is not buyer acceptance. A research-compliance receiving user performs a separate institutional inspection after `DELIVERED`.
+
+Acceptance requires identity, movement-document, physical-condition and welfare checks to pass:
+
+- order `DELIVERED -> ACCEPTED`;
+- research need `ORDERED -> IN_STUDY`.
+
+A rejected intake requires at least one failed check plus documented discrepancies:
+
+- order `DELIVERED -> REJECTED_AT_RECEIPT`;
+- research need remains `ORDERED`.
+
+See `docs/LOGISTICS.md` and `docs/RECEIVING.md`.
+
 ## Privacy boundaries
 
 ### Buyer order projection
@@ -118,11 +140,10 @@ The current implementation performs this cleanup lazily on marketplace/order acc
 
 ## Next transaction layers
 
-After `READY_FOR_PICKUP`, subsequent phases add:
+The remaining post-acceptance phases are:
 
-- transport assignment and movement documents;
-- chain of custody;
-- pickup / in-transit / delivery events;
-- receiving inspection and acceptance;
-- buyer payment and supplier payout ledger;
-- settlement, disputes, refunds, and financial reconciliation.
+- buyer payment and RAM receivable;
+- supplier / carrier / veterinary payouts where applicable;
+- settlement and reconciliation;
+- rejected-receipt disputes, replacements, credits and refunds;
+- study completion / closure bookkeeping.
