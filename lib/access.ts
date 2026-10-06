@@ -1,84 +1,31 @@
-export type UserRole =
-  | "FARM_ADMIN"
-  | "FARM_STAFF"
-  | "RESEARCH_ADMIN"
-  | "RESEARCHER"
-  | "VETERINARIAN"
-  | "RAM_OPERATIONS"
-  | "RAM_SCIENTIFIC"
-  | "RAM_COMPLIANCE"
-  | "RAM_ADMIN";
+import { hasPermission, type Permission, type Role } from "./rbac";
 
 export type Capability =
   | "animal:create"
-  | "animal:read_own"
   | "animal:read_marketplace"
   | "animal:verify"
   | "source:read_restricted"
   | "source:approve_disclosure"
   | "research_need:create"
-  | "research_need:read_own"
   | "match:review"
-  | "operations:manage"
-  | "organization:manage";
+  | "operations:manage";
 
-const grants: Record<UserRole, ReadonlySet<Capability>> = {
-  FARM_ADMIN: new Set([
-    "animal:create",
-    "animal:read_own",
-    "source:approve_disclosure",
-    "organization:manage"
-  ]),
-  FARM_STAFF: new Set(["animal:create", "animal:read_own"]),
-  RESEARCH_ADMIN: new Set([
-    "animal:read_marketplace",
-    "research_need:create",
-    "research_need:read_own",
-    "organization:manage"
-  ]),
-  RESEARCHER: new Set([
-    "animal:read_marketplace",
-    "research_need:create",
-    "research_need:read_own"
-  ]),
-  VETERINARIAN: new Set(["animal:verify"]),
-  RAM_OPERATIONS: new Set([
-    "animal:read_marketplace",
-    "source:read_restricted",
-    "operations:manage",
-    "match:review"
-  ]),
-  RAM_SCIENTIFIC: new Set([
-    "animal:read_marketplace",
-    "source:read_restricted",
-    "match:review",
-    "animal:verify"
-  ]),
-  RAM_COMPLIANCE: new Set([
-    "source:read_restricted",
-    "source:approve_disclosure",
-    "operations:manage"
-  ]),
-  RAM_ADMIN: new Set([
-    "animal:create",
-    "animal:read_own",
-    "animal:read_marketplace",
-    "animal:verify",
-    "source:read_restricted",
-    "source:approve_disclosure",
-    "research_need:create",
-    "research_need:read_own",
-    "match:review",
-    "operations:manage",
-    "organization:manage"
-  ])
+const capabilityPermission: Record<Capability, Permission> = {
+  "animal:create": "CANDIDATE_CREATE",
+  "animal:read_marketplace": "MATCH_REVIEW",
+  "animal:verify": "VET_EXAM_WRITE",
+  "source:read_restricted": "SOURCE_READ_RESTRICTED",
+  "source:approve_disclosure": "SOURCE_DISCLOSURE_APPROVE",
+  "research_need:create": "RESEARCH_REQUEST_MANAGE",
+  "match:review": "MATCH_REVIEW",
+  "operations:manage": "MARKETPLACE_OPERATE"
 };
 
-export function can(role: UserRole, capability: Capability) {
-  return grants[role].has(capability);
+export function can(role: Role, capability: Capability) {
+  return hasPermission(role, capabilityPermission[capability]);
 }
 
-export function requireCapability(role: UserRole, capability: Capability) {
+export function requireCapability(role: Role, capability: Capability) {
   if (!can(role, capability)) {
     throw new Error(`Forbidden: ${role} lacks ${capability}`);
   }
@@ -87,12 +34,12 @@ export function requireCapability(role: UserRole, capability: Capability) {
 export const demoActors = {
   scientist: {
     name: "Dr. Maya Chen",
-    role: "RESEARCHER" as const,
+    role: "RESEARCH_PI" as const,
     organization: "Example Translational Sciences Lab"
   },
   farmer: {
     name: "Alex Morgan",
-    role: "FARM_ADMIN" as const,
+    role: "SUPPLIER_OWNER_ADMIN" as const,
     organization: "Anonymous Partner Farm"
   },
   veterinarian: {
@@ -102,7 +49,7 @@ export const demoActors = {
   },
   ram: {
     name: "RAM Operations",
-    role: "RAM_ADMIN" as const,
+    role: "RAM_SUPER_ADMIN" as const,
     organization: "RAM Corporation"
   }
 };
