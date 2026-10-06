@@ -1,4 +1,5 @@
 import "server-only";
+import type { ExplainableMatch } from "@/lib/matching";
 import type {
   AnimalSubmissionInput,
   ResearchNeedInput,
@@ -38,6 +39,7 @@ export interface PrototypeResearchNeed {
 interface PrototypeStore {
   animals: PrototypeAnimalCase[];
   researchNeeds: PrototypeResearchNeed[];
+  matches: ExplainableMatch[];
   animalSequence: number;
   researchSequence: number;
 }
@@ -52,6 +54,7 @@ function store(): PrototypeStore {
     globalThis.__ramPrototypeStore = {
       animals: [],
       researchNeeds: [],
+      matches: [],
       animalSequence: 2000,
       researchSequence: 200
     };
@@ -152,4 +155,44 @@ export function updatePrototypeResearchNeed(
   if (!need) throw new Error("Research need not found");
   Object.assign(need, patch, { updated: "Just now" });
   return need;
+}
+
+
+export function replacePrototypeMatchesForNeed(
+  researchNeedId: string,
+  matches: ExplainableMatch[]
+) {
+  const db = store();
+  db.matches = [
+    ...db.matches.filter((match) => match.researchNeedId !== researchNeedId),
+    ...matches
+  ];
+  const need = getPrototypeResearchNeed(researchNeedId);
+  if (need) need.matches = matches.length;
+  return matches;
+}
+
+export function getPrototypeMatchesForNeed(researchNeedId: string) {
+  return store().matches
+    .filter((match) => match.researchNeedId === researchNeedId)
+    .sort((a, b) => b.totalScore - a.totalScore);
+}
+
+export function replacePrototypeMatchesForAnimal(
+  animalCaseId: string,
+  matches: ExplainableMatch[]
+) {
+  const db = store();
+  const affectedNeeds = new Set(matches.map((match) => match.researchNeedId));
+  db.matches = [
+    ...db.matches.filter((match) => match.animalCaseId !== animalCaseId),
+    ...matches
+  ];
+  for (const needId of affectedNeeds) {
+    const need = getPrototypeResearchNeed(needId);
+    if (need) {
+      need.matches = db.matches.filter((match) => match.researchNeedId === needId).length;
+    }
+  }
+  return matches;
 }
