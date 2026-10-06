@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = requireRequestSession(request);
+    const session = await requireRequestSession(request);
     const { id } = await params;
     const form = await request.formData();
     const denialReason = form.get("denialReason");
