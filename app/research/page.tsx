@@ -1,16 +1,14 @@
 import Link from "next/link";
-import { getPrototypeResearchNeeds } from "@/lib/server/prototype-store";
+import { requireSession } from "@/lib/auth/session";
+import { dataBackend } from "@/lib/server/db";
+import { listResearchNeeds } from "@/lib/server/repositories";
 
 export const dynamic = "force-dynamic";
 
-const seededNeeds = [
-  { id: "RN-00127", title: "Naturally occurring bilateral hearing loss in swine", status: "MATCH REVIEW", matches: 6, updated: "Today" },
-  { id: "RN-00112", title: "Large-animal chronic osteoarthritis model", status: "ACTIVE", matches: 3, updated: "Yesterday" },
-  { id: "RN-00098", title: "Spontaneous cardiomyopathy for device feasibility", status: "INSTITUTIONAL CLEARANCE", matches: 1, updated: "Oct 2" }
-];
-
-export default function ResearchNeedsPage() {
-  const needs = [...getPrototypeResearchNeeds(), ...seededNeeds];
+export default async function ResearchNeedsPage() {
+  const session = await requireSession();
+  const needs = await listResearchNeeds(session);
+  const backend = dataBackend();
 
   return (
     <section className="page">
@@ -23,11 +21,18 @@ export default function ResearchNeedsPage() {
         <Link className="primaryButton" href="/research/new">Create research need</Link>
       </div>
 
-      <div className="prototypeBanner"><strong>Prototype persistence:</strong> submitted needs persist for the current server process and already pass through the production validation contract.</div>
+      <div className="prototypeBanner">
+        <strong>{backend === "postgres" ? "Durable PostgreSQL storage active." : "Prototype storage active."}</strong>{" "}
+        {backend === "postgres"
+          ? "Research requirements and audit history persist in the database."
+          : "Set DATABASE_URL and RAM_DATA_BACKEND=postgres to enable durable persistence."}
+      </div>
 
       <div className="tableCard">
         <div className="tableRow tableHead"><span>Need</span><span>Status</span><span>Candidates</span><span>Updated</span></div>
-        {needs.map((need) => (
+        {needs.length === 0 ? (
+          <div className="emptyState">No research needs yet. Create the first structured model request.</div>
+        ) : needs.map((need) => (
           <div className="tableRow" key={need.id}>
             <div><strong>{need.id}</strong><div className="subtle">{need.title}</div></div>
             <span className="status">{need.status}</span>
