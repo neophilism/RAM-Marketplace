@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { animalListings } from "@/lib/mock-data";
+import { getMarketplaceListings } from "@/lib/server/marketplace";
 
 export default function MarketplacePage() {
+  const animalListings = getMarketplaceListings();
+
   return (
     <section className="page">
       <div className="pageHeader">
@@ -10,7 +12,7 @@ export default function MarketplacePage() {
           <h1>Available realistic animal models</h1>
           <p>Listings are animal-centered and source-anonymized by default.</p>
         </div>
-        <button className="primaryButton" type="button">Create research need</button>
+        <Link className="primaryButton" href="/research/new">Create research need</Link>
       </div>
       <div className="marketLayout">
         <aside className="filterPanel">
@@ -20,7 +22,7 @@ export default function MarketplacePage() {
           ))}
         </aside>
         <div className="results">
-          <div className="resultsMeta">{animalListings.length} verified models</div>
+          <div className="resultsMeta">{animalListings.length} verified models · farm identities withheld</div>
           {animalListings.map((animal) => (
             <Link className="animalCard" href={"/marketplace/" + animal.id} key={animal.id}>
               <div>
