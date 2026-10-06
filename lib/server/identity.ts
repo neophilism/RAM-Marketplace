@@ -155,7 +155,7 @@ export async function getAccountAccessContext(
 
 export async function requireOperationalPrincipal(
   principal: SessionPrincipal
-): Promise<Omit<SessionPrincipal, "exp">> {
+): Promise<SessionPrincipal> {
   const context = await getAccountAccessContext(principal);
   const decision = evaluateDurableAccess({
     emailVerified: context.emailVerified,
@@ -167,7 +167,10 @@ export async function requireOperationalPrincipal(
     throw new Error(accessError(decision.reason));
   }
 
-  return context.principal;
+  return {
+    ...context.principal,
+    exp: principal.exp
+  };
 }
 
 function authContext(assertion: ExternalIdentityAssertionPayload) {
