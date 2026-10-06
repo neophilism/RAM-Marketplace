@@ -10,7 +10,10 @@ export interface RestrictedAnimalRecord {
   condition: string;
   phenotype: string[];
   diseaseStage: string;
+  etiology?: string;
   diagnosticConfidence: "Confirmed" | "High" | "Moderate";
+  comorbidities?: string[];
+  diagnosticEvidence?: string[];
   generalizedRegion: string;
   availability: string;
   priceUsd: number;
@@ -49,7 +52,10 @@ export function toMarketplaceListing(record: RestrictedAnimalRecord): AnimalList
     condition: record.condition,
     phenotype: [...record.phenotype],
     diseaseStage: record.diseaseStage,
+    etiology: record.etiology,
     diagnosticConfidence: record.diagnosticConfidence,
+    comorbidities: [...(record.comorbidities ?? [])],
+    diagnosticEvidence: [...(record.diagnosticEvidence ?? [])],
     region: record.generalizedRegion,
     availability: record.availability,
     priceUsd: record.priceUsd,

@@ -22,11 +22,20 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
             <div><dt>Age / sex</dt><dd>{animal.age} · {animal.sex}</dd></div>
             <div><dt>Weight</dt><dd>{animal.weightKg ? animal.weightKg + " kg" : "Not disclosed"}</dd></div>
             <div><dt>Disease stage</dt><dd>{animal.diseaseStage}</dd></div>
+            <div><dt>Etiology</dt><dd>{animal.etiology ?? "Not characterized"}</dd></div>
             <div><dt>Diagnostic confidence</dt><dd>{animal.diagnosticConfidence}</dd></div>
             <div><dt>Region</dt><dd>{animal.region}</dd></div>
           </dl>
           <h3>Observed phenotype</h3>
           <ul>{animal.phenotype.map((item) => <li key={item}>{item}</li>)}</ul>
+          <h3>Diagnostic evidence</h3>
+          {animal.diagnosticEvidence.length > 0
+            ? <ul>{animal.diagnosticEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
+            : <p>No diagnostic evidence has been released in the current disclosure tier.</p>}
+          <h3>Comorbidities</h3>
+          {animal.comorbidities.length > 0
+            ? <ul>{animal.comorbidities.map((item) => <li key={item}>{item}</li>)}</ul>
+            : <p>No comorbidities are documented in the public scientific record.</p>}
         </article>
         <article className="panel">
           <h2>Source privacy</h2>

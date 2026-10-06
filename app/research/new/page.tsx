@@ -31,6 +31,7 @@ export default function NewResearchNeedPage() {
             <label><span>Maximum age (months)</span><input name="maxAgeMonths" type="number" min="1" /></label>
             <label><span>Sex</span><select name="sex" defaultValue="Any"><option>Any</option><option>Female</option><option>Male</option></select></label>
             <label><span>Disease stage</span><input name="diseaseStage" /></label>
+            <label><span>Etiology requirement</span><input name="etiologyRequirement" placeholder="e.g. naturally progressive / idiopathic / specific cause" /></label>
             <label className="span2"><span>Required phenotype *</span><textarea name="requiredPhenotype" required rows={4} /></label>
             <label className="span2"><span>Exclusion criteria</span><textarea name="exclusionCriteria" rows={3} /></label>
             <label className="span2"><span>Acceptable comorbidities / natural variation</span><textarea name="acceptableComorbidities" rows={3} /></label>

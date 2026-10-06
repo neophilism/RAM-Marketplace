@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
       maxAgeMonths: blankToUndefined(form.get("maxAgeMonths")),
       sex: form.get("sex"),
       diseaseStage: blankToUndefined(form.get("diseaseStage")),
+      etiologyRequirement: blankToUndefined(form.get("etiologyRequirement")),
       requiredPhenotype: form.get("requiredPhenotype"),
       exclusionCriteria: blankToUndefined(form.get("exclusionCriteria")),
       acceptableComorbidities: blankToUndefined(form.get("acceptableComorbidities")),

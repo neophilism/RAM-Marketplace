@@ -202,6 +202,7 @@ export async function createResearchNeed(
         maxAgeMonths: input.maxAgeMonths,
         sex: input.sex,
         diseaseStage: input.diseaseStage,
+        etiologyRequirement: input.etiologyRequirement,
         requiredPhenotype: input.requiredPhenotype,
         exclusionCriteria: input.exclusionCriteria,
         acceptableComorbidities: input.acceptableComorbidities,
@@ -256,7 +257,8 @@ export async function listResearchNeeds(
       id: true,
       title: true,
       status: true,
-      updatedAt: true
+      updatedAt: true,
+      _count: { select: { matches: true } }
     }
   });
 
@@ -264,7 +266,7 @@ export async function listResearchNeeds(
     id: row.id,
     title: row.title,
     status: row.status,
-    matches: 0,
+    matches: row._count.matches,
     updated: row.updatedAt.toLocaleDateString()
   }));
 }
