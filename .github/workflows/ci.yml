@@ -18,3 +18,17 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - name: Live multi-role prototype E2E
+        env:
+          NODE_ENV: production
+          RAM_DATA_BACKEND: prototype
+          RAM_DEMO_AUTH_ENABLED: "true"
+          RAM_PUBLIC_ONBOARDING_ENABLED: "false"
+          AUTH_SECRET: ram-ci-e2e-secret-that-is-long-enough-2026
+          RAM_MAX_MUTATION_BYTES: "1048576"
+          RAM_E2E_BASE_URL: http://127.0.0.1:3117
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3117 > /tmp/ram-e2e.log 2>&1 &
+          server_pid=$!
+          trap 'cat /tmp/ram-e2e.log; kill "$server_pid" 2>/dev/null || true' EXIT
+          npm run e2e:prototype

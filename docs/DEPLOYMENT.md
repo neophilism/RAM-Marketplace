@@ -84,3 +84,13 @@ npm run dev
 Before a production launch, replace `db:push` with committed migrations and connect the selected production identity provider.
 
 Also configure TLS, edge/WAF throttling, trusted forwarding headers, PostgreSQL network restrictions, encrypted backups, centralized logging/alerting, dependency/image scanning and tested restore/incident procedures before admitting real transactions.
+
+## Pilot readiness
+
+Run `npm run pilot:check` against the intended production environment. A non-zero exit code means an automatically verifiable launch requirement is blocked.
+
+RAM also exposes a super-admin `/ops/pilot` dashboard with the same automatic checks plus manual deployment gates.
+
+CI runs `npm run e2e:prototype` against the built application and covers the normal transaction path plus rejected-receipt replacement and refund paths. This harness validates application integration but does not replace PostgreSQL migration/backup testing or external identity/payment validation.
+
+See `docs/PILOT.md` before admitting real transactions.
