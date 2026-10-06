@@ -1365,6 +1365,13 @@ export async function reviewOrderClearance(
     }
 
     if (input.decision === "CLEARED") {
+      const animal = getPrototypeAnimal(order.animalCaseId);
+      if (!animal?.transportReady) {
+        throw new Error("Veterinary transport fitness is not confirmed");
+      }
+      if (!animal.input.independentCullAttestation) {
+        throw new Error("Independent cull provenance is not confirmed");
+      }
       if (
         !canAdvanceOrder({
           from: "CLEARANCE_PENDING",
@@ -1420,7 +1427,15 @@ export async function reviewOrderClearance(
       where: { id: input.orderId },
       include: {
         researchNeed: { select: { status: true } },
-        clearance: true
+        clearance: true,
+        animalCase: {
+          select: {
+            transportReady: true,
+            cullEvent: {
+              select: { independentlyIdentified: true }
+            }
+          }
+        }
       }
     });
     if (!order || order.status !== "CLEARANCE_PENDING") {
@@ -1430,6 +1445,12 @@ export async function reviewOrderClearance(
 
     const now = new Date();
     if (input.decision === "CLEARED") {
+      if (!order.animalCase.transportReady) {
+        throw new Error("Veterinary transport fitness is not confirmed");
+      }
+      if (!order.animalCase.cullEvent?.independentlyIdentified) {
+        throw new Error("Independent cull provenance is not confirmed");
+      }
       if (
         !canAdvanceOrder({
           from: order.status,
