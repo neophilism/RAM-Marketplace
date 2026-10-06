@@ -37,3 +37,20 @@ npm run build
 ## Development approach
 
 Changes are developed on feature branches and merged through pull requests. The next implementation phase is authentication, organizations/RBAC, persisted animal submission, research needs, veterinary verification, and the enforced anonymous marketplace query boundary.
+
+## Phase 2 foundation
+
+The second build phase adds:
+
+- organization membership roles and application capabilities;
+- a separate restricted source-record data model;
+- server-only marketplace projection with automated leak tests;
+- farm animal-submission workflow with validation;
+- structured research-needs workflow;
+- veterinary verification workspace;
+- server-side prototype transaction persistence;
+- expanded CI including privacy/RBAC tests.
+
+The prototype transaction store is intentionally temporary. The schema is PostgreSQL-ready; durable database wiring, migrations and production authentication follow once the deployment environment is provisioned.
+
+- Farm intake now records the pre-existing cull decision date, planned cull date, cull reason and an independent-cull attestation so the platform preserves cull-first provenance.

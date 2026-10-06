@@ -2,9 +2,11 @@ import Link from "next/link";
 
 const links = [
   { href: "/", label: "Overview" },
-  { href: "/marketplace", label: "Animal Marketplace" },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/research", label: "Research Needs" },
   { href: "/farm", label: "Farm Portal" },
-  { href: "/ops", label: "RAM Operations" }
+  { href: "/vet", label: "Vet Review" },
+  { href: "/ops", label: "RAM Ops" }
 ];
 
 export function Nav() {
@@ -17,7 +19,7 @@ export function Nav() {
       <nav aria-label="Primary navigation">
         {links.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}
       </nav>
-      <button className="ghostButton" type="button">Demo account</button>
+      <Link className="ghostButton" href="/account">Demo account</Link>
     </header>
   );
 }
