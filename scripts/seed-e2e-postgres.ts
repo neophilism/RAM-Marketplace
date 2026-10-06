@@ -169,6 +169,59 @@ try {
     });
   }
 
+  const paymentGatewayName =
+    process.env.RAM_PAYMENT_GATEWAY_NAME ?? "ci-gateway";
+
+  await prisma.organizationPaymentProfile.upsert({
+    where: { organizationId: "demo-research-organization" },
+    create: {
+      organizationId: "demo-research-organization",
+      gateway: paymentGatewayName,
+      externalAccountReference: "ci-buyer-account-ref",
+      status: "ACTIVE",
+      buyerCollectionEnabled: true,
+      supplierPayoutEnabled: false,
+      verifiedByUserId: "demo-finance-user",
+      verifiedAt: new Date(),
+      notes: "Controlled CI buyer payment profile."
+    },
+    update: {
+      gateway: paymentGatewayName,
+      externalAccountReference: "ci-buyer-account-ref",
+      status: "ACTIVE",
+      buyerCollectionEnabled: true,
+      supplierPayoutEnabled: false,
+      verifiedByUserId: "demo-finance-user",
+      verifiedAt: new Date(),
+      notes: "Controlled CI buyer payment profile."
+    }
+  });
+
+  await prisma.organizationPaymentProfile.upsert({
+    where: { organizationId: "demo-farm-organization" },
+    create: {
+      organizationId: "demo-farm-organization",
+      gateway: paymentGatewayName,
+      externalAccountReference: "ci-supplier-account-ref",
+      status: "ACTIVE",
+      buyerCollectionEnabled: false,
+      supplierPayoutEnabled: true,
+      verifiedByUserId: "demo-finance-user",
+      verifiedAt: new Date(),
+      notes: "Controlled CI supplier payment profile."
+    },
+    update: {
+      gateway: paymentGatewayName,
+      externalAccountReference: "ci-supplier-account-ref",
+      status: "ACTIVE",
+      buyerCollectionEnabled: false,
+      supplierPayoutEnabled: true,
+      verifiedByUserId: "demo-finance-user",
+      verifiedAt: new Date(),
+      notes: "Controlled CI supplier payment profile."
+    }
+  });
+
   await prisma.farmSite.upsert({
     where: { id: "demo-farm-site" },
     create: {

@@ -30,6 +30,12 @@ export default async function FinancePage() {
         </div>
       </div>
 
+      <div className="formActions">
+        <Link className="secondaryButton" href="/finance/payment-profiles">
+          Payment routing profiles
+        </Link>
+      </div>
+
       <div className="detailGrid">
         <article className="panel">
           <h2>Create supplier pricing policy</h2>

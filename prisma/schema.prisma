@@ -172,6 +172,27 @@ enum FinancialSettlementStatus {
   CLOSED
 }
 
+enum PaymentExecutionType {
+  BUYER_COLLECTION
+  SUPPLIER_PAYOUT
+  BUYER_REFUND
+}
+
+enum PaymentProfileStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PaymentExecutionStatus {
+  CREATED
+  SUBMITTED
+  SUBMISSION_UNKNOWN
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
 enum FinancialLedgerEntryType {
   BUYER_RECEIVABLE
   SUPPLIER_PAYABLE
@@ -207,6 +228,8 @@ model Organization {
   disclosureRequests DisclosureRequest[] @relation("DisclosureRequesterOrganization")
   transportAssignments TransportAssignment[] @relation("TransportOrganizationAssignments")
   verification OrganizationVerification?
+  paymentProfile OrganizationPaymentProfile?
+  paymentExecutions PaymentExecution[] @relation("PaymentExecutionCounterparty")
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 }
@@ -234,6 +257,8 @@ model User {
   resolvedDisputes   OrderDispute[]      @relation("DisputeResolvedBy")
   externalIdentities ExternalIdentity[]
   organizationVerificationsReviewed OrganizationVerification[] @relation("OrganizationVerificationReviewer")
+  requestedPaymentExecutions PaymentExecution[] @relation("PaymentExecutionRequester")
+  verifiedPaymentProfiles OrganizationPaymentProfile[] @relation("PaymentProfileVerifier")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -711,6 +736,7 @@ model FinancialSettlement {
   reconciliationNotes      String?
   order                    Order                     @relation(fields: [orderId], references: [id])
   entries                  FinancialLedgerEntry[]
+  paymentExecutions        PaymentExecution[]
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
 
@@ -731,6 +757,69 @@ model FinancialLedgerEntry {
 
   @@index([settlementId, occurredAt])
   @@index([type, externalReference])
+}
+
+model OrganizationPaymentProfile {
+  id                       String               @id @default(cuid())
+  organizationId           String               @unique
+  gateway                  String
+  externalAccountReference String
+  status                   PaymentProfileStatus @default(ACTIVE)
+  buyerCollectionEnabled   Boolean              @default(false)
+  supplierPayoutEnabled    Boolean              @default(false)
+  verifiedByUserId         String
+  verifiedAt               DateTime             @default(now())
+  notes                    String?
+  organization             Organization         @relation(fields: [organizationId], references: [id])
+  verifiedBy               User                 @relation("PaymentProfileVerifier", fields: [verifiedByUserId], references: [id])
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+
+  @@index([gateway, status])
+}
+
+model PaymentExecution {
+  id                 String                 @id @default(cuid())
+  settlementId       String
+  counterpartyOrganizationId String
+  accountReference   String
+  type               PaymentExecutionType
+  status             PaymentExecutionStatus @default(CREATED)
+  amountCents        Int
+  currency           String                 @default("USD")
+  gateway            String?
+  provider           String?
+  providerReference  String?
+  idempotencyKey     String                 @unique
+  requestedByUserId  String
+  requestedBy        User                   @relation("PaymentExecutionRequester", fields: [requestedByUserId], references: [id])
+  failureCode        String?
+  failureMessage     String?
+  submittedAt        DateTime?
+  completedAt        DateTime?
+  settlement         FinancialSettlement    @relation(fields: [settlementId], references: [id])
+  counterpartyOrganization Organization       @relation("PaymentExecutionCounterparty", fields: [counterpartyOrganizationId], references: [id])
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([settlementId, createdAt])
+  @@index([counterpartyOrganizationId, createdAt])
+  @@index([status, createdAt])
+  @@unique([provider, providerReference])
+}
+
+model PaymentWebhookReceipt {
+  id             String   @id @default(cuid())
+  gateway        String
+  eventId        String
+  executionId    String?
+  payloadHash    String
+  receivedAt     DateTime @default(now())
+  processedAt    DateTime?
+  result         String?
+
+  @@unique([gateway, eventId])
+  @@index([executionId, receivedAt])
 }
 
 model SecurityRateLimitBucket {
