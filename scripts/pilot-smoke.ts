@@ -80,7 +80,12 @@ async function checkedFetch(
 }
 
 export async function runPilotSmoke(
-  env: PilotSmokeEnvironment = process.env,
+  env: PilotSmokeEnvironment = {
+    RAM_PILOT_BASE_URL: process.env.RAM_PILOT_BASE_URL,
+    RAM_PILOT_ALLOW_INSECURE_LOCAL:
+      process.env.RAM_PILOT_ALLOW_INSECURE_LOCAL,
+    RAM_MONITORING_RUN_TOKEN: process.env.RAM_MONITORING_RUN_TOKEN
+  },
   fetchImpl: FetchLike = fetch
 ): Promise<PilotSmokeResult> {
   const allowInsecureLocal =
