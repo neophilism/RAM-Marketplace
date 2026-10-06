@@ -49,7 +49,6 @@ export default async function OpsCandidatePage({
                   <option value="REQUESTABLE">Additional source facts requestable</option>
                   <option value="POST_RESERVATION">Additional source facts after reservation</option>
                   <option value="POST_PURCHASE">Additional source facts after purchase</option>
-                  <option value="RAM_INTERNAL_ONLY">RAM internal only — do not display publicly</option>
                 </select>
               </label>
               <label className="span2 checkCard">
