@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SessionPrincipal } from "@/lib/auth/token";
+import type { EnrollmentIdentity } from "@/lib/auth/enrollment-token";
 import {
   initialRoleForOrganization,
   type OnboardingInput
@@ -8,10 +9,12 @@ import {
 import { dataBackend, requirePrisma } from "@/lib/server/db";
 
 export async function createOnboardingAccount(
-  input: OnboardingInput
+  input: OnboardingInput,
+  verifiedIdentity?: EnrollmentIdentity
 ): Promise<Omit<SessionPrincipal, "exp">> {
   const role = initialRoleForOrganization(input.organizationType);
-  const email = input.email.trim().toLowerCase();
+  const email = (verifiedIdentity?.email ?? input.email).trim().toLowerCase();
+  const name = (verifiedIdentity?.name ?? input.name).trim();
 
   if (dataBackend() === "prototype") {
     return {
@@ -19,29 +22,63 @@ export async function createOnboardingAccount(
       organizationId: `demo-org-${randomUUID()}`,
       role,
       email,
-      name: input.name.trim()
+      name
     };
   }
 
   const prisma = requirePrisma();
 
   return prisma.$transaction(async (tx) => {
-    const user = await tx.user.upsert({
-      where: { email },
-      create: {
-        email,
-        name: input.name.trim()
-      },
-      update: {
-        name: input.name.trim()
+    let user;
+
+    if (verifiedIdentity) {
+      const linkedIdentity = await tx.externalIdentity.findUnique({
+        where: {
+          provider_subject: {
+            provider: verifiedIdentity.provider,
+            subject: verifiedIdentity.subject
+          }
+        },
+        include: { user: true }
+      });
+
+      if (
+        !linkedIdentity ||
+        linkedIdentity.userId !== verifiedIdentity.userId ||
+        linkedIdentity.user.email.toLowerCase() !== email ||
+        !linkedIdentity.user.emailVerifiedAt
+      ) {
+        throw new Error("Verified identity enrollment no longer matches RAM account");
       }
-    });
+
+      user = await tx.user.update({
+        where: { id: linkedIdentity.userId },
+        data: { name }
+      });
+    } else {
+      user = await tx.user.upsert({
+        where: { email },
+        create: {
+          email,
+          name
+        },
+        update: {
+          name
+        }
+      });
+    }
 
     const organization = await tx.organization.create({
       data: {
         name: input.organizationName.trim(),
         type: input.organizationType,
-        status: "PENDING_VERIFICATION"
+        status: "PENDING_VERIFICATION",
+        verification: {
+          create: {
+            decision: "PENDING",
+            method: verifiedIdentity ? "VERIFIED_EXTERNAL_IDENTITY" : "MANUAL_ONBOARDING"
+          }
+        }
       }
     });
 
@@ -79,7 +116,8 @@ export async function createOnboardingAccount(
         nextState: {
           status: "PENDING_VERIFICATION",
           type: input.organizationType,
-          role
+          role,
+          identityProvider: verifiedIdentity?.provider ?? null
         }
       }
     });
