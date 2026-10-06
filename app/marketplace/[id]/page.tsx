@@ -1,0 +1,42 @@
+import { notFound } from "next/navigation";
+import { animalListings, getAnimal } from "@/lib/mock-data";
+
+export function generateStaticParams() {
+  return animalListings.map((animal) => ({ id: animal.id }));
+}
+
+export default async function AnimalPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const animal = getAnimal(id);
+  if (!animal) notFound();
+  return (
+    <section className="page narrow">
+      <div className="detailHeader">
+        <div><div className="eyebrow">{animal.id}</div><h1>{animal.condition}</h1><p>{animal.summary}</p></div>
+        <div className="priceBox"><span>Model price</span><strong>${animal.priceUsd.toLocaleString()}</strong><button className="primaryButton" type="button">Reserve model</button></div>
+      </div>
+      <div className="detailGrid">
+        <article className="panel">
+          <h2>Scientific profile</h2>
+          <dl>
+            <div><dt>Species / breed</dt><dd>{animal.species} · {animal.breed}</dd></div>
+            <div><dt>Age / sex</dt><dd>{animal.age} · {animal.sex}</dd></div>
+            <div><dt>Weight</dt><dd>{animal.weightKg} kg</dd></div>
+            <div><dt>Disease stage</dt><dd>{animal.diseaseStage}</dd></div>
+            <div><dt>Diagnostic confidence</dt><dd>{animal.diagnosticConfidence}</dd></div>
+            <div><dt>Region</dt><dd>{animal.region}</dd></div>
+          </dl>
+          <h3>Observed phenotype</h3>
+          <ul>{animal.phenotype.map((item) => <li key={item}>{item}</li>)}</ul>
+        </article>
+        <article className="panel">
+          <h2>Source privacy</h2>
+          <p>The farm is intentionally anonymous. RAM holds the verified source record in a restricted data layer and reveals only information authorized for the current transaction stage.</p>
+          <div className="privacyState"><strong>Current disclosure tier</strong><span>{animal.sourceDisclosure.replaceAll("_", " ")}</span></div>
+          <button className="secondaryButton" type="button">Request additional source information</button>
+          <p className="finePrint">Requests must identify scientific or purchasing relevance. Release depends on farm permissions, RAM review, and any required NDA or transaction milestone.</p>
+        </article>
+      </div>
+    </section>
+  );
+}
