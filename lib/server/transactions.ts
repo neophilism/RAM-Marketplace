@@ -1395,9 +1395,11 @@ export async function reviewOrderClearance(
 
     assertOrderTransition("CLEARANCE_PENDING", "CLEARANCE_FAILED");
     const need = getPrototypeResearchNeed(order.researchNeedId);
-    if (need?.status === "INSTITUTIONAL_CLEARANCE") {
-      requireResearchNeedTransition("INSTITUTIONAL_CLEARANCE", "SELECTED");
-      updatePrototypeResearchNeed(need.id, { status: "SELECTED" });
+    if (need) {
+      const reset = validateNeedResetPath(need.status as ResearchNeedStatus);
+      if (reset.finalStatus === "ACTIVE") {
+        updatePrototypeResearchNeed(need.id, { status: "ACTIVE" });
+      }
     }
     return updatePrototypeOrder(order.id, {
       status: "CLEARANCE_FAILED",
@@ -1482,13 +1484,24 @@ export async function reviewOrderClearance(
     }
 
     assertOrderTransition(order.status, "CLEARANCE_FAILED");
-    if (order.researchNeed.status === "INSTITUTIONAL_CLEARANCE") {
-      requireResearchNeedTransition("INSTITUTIONAL_CLEARANCE", "SELECTED");
+    const reset = validateNeedResetPath(order.researchNeed.status);
+    if (
+      reset.finalStatus === "ACTIVE" &&
+      order.researchNeed.status !== "ACTIVE"
+    ) {
       await tx.researchNeed.update({
         where: { id: order.researchNeedId },
-        data: { status: "SELECTED" }
+        data: { status: "ACTIVE" }
       });
     }
+    await tx.researchMatch.updateMany({
+      where: {
+        researchNeedId: order.researchNeedId,
+        animalCaseId: order.animalCaseId,
+        status: "SELECTED"
+      },
+      data: { status: "STALE" }
+    });
 
     await tx.orderClearance.update({
       where: { id: order.clearance.id },
