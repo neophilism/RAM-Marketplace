@@ -1,12 +1,14 @@
 {
   "name": "ram-marketplace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "next": "^16.0.0",
@@ -19,6 +21,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "prisma": "^7.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }
