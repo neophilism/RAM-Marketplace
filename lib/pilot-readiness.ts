@@ -71,6 +71,55 @@ export function evaluatePilotReadiness(
     }
   ];
 
+  const identitySecret = env.RAM_IDENTITY_ASSERTION_SECRET;
+  checks.push({
+    id: "identity_secret",
+    label: "External identity assertion secret",
+    status:
+      strongSecret(identitySecret) && identitySecret !== env.AUTH_SECRET
+        ? "PASS"
+        : "BLOCK",
+    detail:
+      strongSecret(identitySecret) && identitySecret !== env.AUTH_SECRET
+        ? "Identity assertions use a strong secret distinct from AUTH_SECRET."
+        : "Configure RAM_IDENTITY_ASSERTION_SECRET with at least 32 non-placeholder characters and keep it distinct from AUTH_SECRET."
+  });
+
+  const providers = (env.RAM_IDENTITY_ALLOWED_PROVIDERS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  checks.push({
+    id: "identity_providers",
+    label: "Identity provider allowlist",
+    status: providers.length > 0 ? "PASS" : "BLOCK",
+    detail:
+      providers.length > 0
+        ? "At least one external identity provider is explicitly allowed."
+        : "Configure RAM_IDENTITY_ALLOWED_PROVIDERS."
+  });
+
+  checks.push({
+    id: "identity_login_url",
+    label: "Identity login URL",
+    status: /^https:\/\//i.test(env.RAM_IDENTITY_LOGIN_URL ?? "")
+      ? "PASS"
+      : "BLOCK",
+    detail: /^https:\/\//i.test(env.RAM_IDENTITY_LOGIN_URL ?? "")
+      ? "Identity login URL uses HTTPS."
+      : "Configure RAM_IDENTITY_LOGIN_URL with an HTTPS URL."
+  });
+
+  checks.push({
+    id: "identity_mfa",
+    label: "Identity MFA policy",
+    status: env.RAM_IDENTITY_REQUIRE_MFA === "false" ? "BLOCK" : "PASS",
+    detail:
+      env.RAM_IDENTITY_REQUIRE_MFA === "false"
+        ? "Pilot identity assertions must require MFA."
+        : "External identity assertions require MFA."
+  });
+
   const mutationBytes = Number(env.RAM_MAX_MUTATION_BYTES ?? "1048576");
   checks.push({
     id: "mutation_limit",
@@ -90,7 +139,7 @@ export function evaluatePilotReadiness(
   });
 
   const manual = [
-    ["identity", "Identity proofing / MFA", "Connect and validate the selected production identity provider and MFA/SSO policy."],
+    ["identity", "Identity provider validation", "Validate the upstream provider/gateway claim mapping, MFA signal, signing-secret handling and incident revocation procedure."],
     ["migrations", "Reviewed database migrations", "Apply reviewed Prisma migrations; do not launch production from db:push."],
     ["edge", "TLS / WAF / hard body limits", "Confirm TLS termination, trusted forwarding, WAF throttling and edge body-size enforcement."],
     ["backups", "Backup / restore exercise", "Confirm encrypted backups and complete a tested restore exercise."],
