@@ -233,7 +233,10 @@ model AnimalCase {
   weightKg             Float?
   condition            String
   diseaseStage         String?
+  etiology             String?
   diagnosticConfidence String?
+  comorbidities        Json?
+  diagnosticEvidence   Json?
   regionLabel          String
   publicSummary        String
   phenotype            Json?
@@ -294,8 +297,11 @@ model VeterinaryReview {
   welfareNotes   String?
   diagnosticPlan       String?
   diseaseStage         String?
+  etiology             String?
   diagnosticConfidence String?
   phenotype            Json?
+  comorbidities        Json?
+  diagnosticEvidence   Json?
   publicSummary        String?
   transportReady       Boolean?
   reviewedAt           DateTime?
@@ -318,6 +324,7 @@ model ResearchNeed {
   maxAgeMonths            Int?
   sex                     String?
   diseaseStage            String?
+  etiologyRequirement     String?
   requiredPhenotype       String
   exclusionCriteria       String?
   acceptableComorbidities String?
