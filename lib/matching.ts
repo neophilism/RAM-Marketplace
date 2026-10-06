@@ -8,8 +8,11 @@ export interface MatchAnimal {
   ageMonths?: number | null;
   condition: string;
   diseaseStage?: string | null;
+  etiology?: string | null;
   diagnosticConfidence?: string | null;
   phenotype: string[];
+  comorbidities: string[];
+  diagnosticEvidence: string[];
   publicSummary: string;
   listPriceCents?: number | null;
   transportReady: boolean;
@@ -25,6 +28,7 @@ export interface MatchNeed {
   maxAgeMonths?: number | null;
   sex?: string | null;
   diseaseStage?: string | null;
+  etiologyRequirement?: string | null;
   requiredPhenotype: string;
   exclusionCriteria?: string | null;
   acceptableComorbidities?: string | null;
@@ -215,7 +219,10 @@ export function scoreMatch(animal: MatchAnimal, need: MatchNeed): ExplainableMat
     animal.condition,
     animal.publicSummary,
     animal.diseaseStage ?? "",
-    ...animal.phenotype
+    animal.etiology ?? "",
+    ...animal.phenotype,
+    ...animal.comorbidities,
+    ...animal.diagnosticEvidence
   ].join(" ");
 
   const phenotypeFit = boundedScore(
@@ -223,23 +230,64 @@ export function scoreMatch(animal: MatchAnimal, need: MatchNeed): ExplainableMat
     coverage(need.requiredPhenotype, candidateText)
   );
 
-  const diagnosticConfidence = confidenceScore(animal.diagnosticConfidence);
-
-  const etiologyFit = boundedScore(
-    MATCH_WEIGHTS.etiologyFit,
-    coverage(need.condition, candidateText)
+  const diagnosticEvidenceText = animal.diagnosticEvidence.join(" ");
+  const requiredDiagnosticsCoverage = coverage(
+    need.requiredDiagnostics,
+    diagnosticEvidenceText
   );
+  if (need.requiredDiagnostics?.trim()) {
+    if (animal.diagnosticEvidence.length === 0 || requiredDiagnosticsCoverage === 0) {
+      gates.push({
+        gate: "required_diagnostics",
+        state: "REVIEW",
+        reason: "The required diagnostic evidence is not clearly documented in the candidate record."
+      });
+      reviewFlags.push("Confirm required diagnostics before selection.");
+    } else {
+      gates.push({
+        gate: "required_diagnostics",
+        state: "PASS",
+        reason: "Documented diagnostic evidence overlaps the requested diagnostics."
+      });
+    }
+  } else {
+    gates.push({
+      gate: "required_diagnostics",
+      state: "PASS",
+      reason: "No specific diagnostic modality is required."
+    });
+  }
 
+  let diagnosticConfidence = confidenceScore(animal.diagnosticConfidence);
+  if (
+    need.requiredDiagnostics?.trim() &&
+    (animal.diagnosticEvidence.length === 0 || requiredDiagnosticsCoverage === 0)
+  ) {
+    diagnosticConfidence = Math.min(diagnosticConfidence, 10);
+  }
+
+  const etiologyFit = need.etiologyRequirement?.trim()
+    ? boundedScore(
+        MATCH_WEIGHTS.etiologyFit,
+        coverage(need.etiologyRequirement, animal.etiology ?? "")
+      )
+    : MATCH_WEIGHTS.etiologyFit;
+
+  if (need.etiologyRequirement?.trim() && !animal.etiology?.trim()) {
+    reviewFlags.push("Etiology is not characterized.");
+  }
+
+  const comorbidityText = animal.comorbidities.join(" ");
   let comorbidityFit = MATCH_WEIGHTS.comorbidityFit;
   if (need.exclusionCriteria?.trim()) {
-    const exclusionOverlap = coverage(need.exclusionCriteria, candidateText);
+    const exclusionOverlap = coverage(need.exclusionCriteria, comorbidityText);
     comorbidityFit = boundedScore(MATCH_WEIGHTS.comorbidityFit, 1 - exclusionOverlap);
     if (exclusionOverlap > 0) {
       reviewFlags.push("Potential overlap with exclusion criteria.");
       reasons.push("Comorbidity score reduced because candidate text overlaps exclusion criteria.");
     }
   } else if (need.acceptableComorbidities?.trim()) {
-    const acceptableOverlap = coverage(need.acceptableComorbidities, candidateText);
+    const acceptableOverlap = coverage(need.acceptableComorbidities, comorbidityText);
     comorbidityFit = Math.max(
       7,
       boundedScore(MATCH_WEIGHTS.comorbidityFit, acceptableOverlap)
