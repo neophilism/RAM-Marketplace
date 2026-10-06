@@ -22,7 +22,8 @@ export type Capability =
   | "disclosure:supplier_review"
   | "transport:assign"
   | "transport:update"
-  | "operations:manage";
+  | "operations:manage"
+  | "admin:manage";
 
 const capabilityPermission: Record<Capability, Permission> = {
   "animal:create": "CANDIDATE_CREATE",
@@ -46,7 +47,8 @@ const capabilityPermission: Record<Capability, Permission> = {
   "disclosure:supplier_review": "SOURCE_DISCLOSURE_APPROVE",
   "transport:assign": "MARKETPLACE_OPERATE",
   "transport:update": "TRANSPORT_UPDATE",
-  "operations:manage": "MARKETPLACE_OPERATE"
+  "operations:manage": "MARKETPLACE_OPERATE",
+  "admin:manage": "ADMIN_MANAGE"
 };
 
 export function can(role: Role, capability: Capability) {
