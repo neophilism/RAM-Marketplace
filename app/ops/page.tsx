@@ -1,3 +1,6 @@
+import { requireCapability } from "@/lib/access";
+import { requireSession } from "@/lib/auth/session";
+
 const queue = [
   { type: "Veterinary review", item: "RAM-SW-0001902", urgency: "Today", owner: "Unassigned" },
   { type: "Disclosure request", item: "RAM-OV-0000473", urgency: "4h SLA", owner: "Privacy review" },
@@ -5,7 +8,12 @@ const queue = [
   { type: "Transport gate", item: "RAM-BO-0000921", urgency: "48h", owner: "Logistics" }
 ];
 
-export default function OpsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function OpsPage() {
+  const session = await requireSession();
+  requireCapability(session.role, "operations:manage");
+
   return (
     <section className="page">
       <div className="pageHeader"><div><div className="eyebrow">RAM internal</div><h1>Operations command center</h1><p>One queue spanning clinical verification, matching, disclosure, compliance, contracting and logistics.</p></div></div>

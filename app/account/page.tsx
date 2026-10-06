@@ -1,4 +1,8 @@
-import { can, demoActors, type Capability } from "@/lib/access";
+import { can, type Capability } from "@/lib/access";
+import { requireSession } from "@/lib/auth/session";
+import { getOrganizationContext } from "@/lib/server/repositories";
+
+export const dynamic = "force-dynamic";
 
 const capabilities: { id: Capability; label: string }[] = [
   { id: "animal:create", label: "Submit animal cases" },
@@ -11,35 +15,50 @@ const capabilities: { id: Capability; label: string }[] = [
   { id: "operations:manage", label: "Manage RAM operations" }
 ];
 
-export default function AccountPage() {
-  const actors = Object.entries(demoActors);
+export default async function AccountPage() {
+  const session = await requireSession();
+  const organization = await getOrganizationContext(session);
 
   return (
-    <section className="page">
+    <section className="page narrow">
       <div className="pageHeader">
         <div>
-          <div className="eyebrow">Identity & access prototype</div>
-          <h1>Role-based workspaces</h1>
-          <p>Production authentication will bind verified users to organizations and memberships. This page shows the capability model already enforced by the application layer.</p>
+          <div className="eyebrow">Account & access</div>
+          <h1>{session.name}</h1>
+          <p>{session.email}</p>
         </div>
+        <form action="/api/session/logout" method="post">
+          <button className="secondaryButton" type="submit">Sign out</button>
+        </form>
       </div>
 
-      <div className="roleGrid">
-        {actors.map(([key, actor]) => (
-          <article className="panel" key={key}>
-            <span className="pill">{actor.role.replaceAll("_", " ")}</span>
-            <h2>{actor.name}</h2>
-            <p>{actor.organization}</p>
-            <ul className="capabilityList">
-              {capabilities.map((capability) => (
-                <li key={capability.id} className={can(actor.role, capability.id) ? "allowed" : "denied"}>
-                  <span>{can(actor.role, capability.id) ? "✓" : "—"}</span>{capability.label}
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
+      <div className="detailGrid">
+        <article className="panel">
+          <span className="pill">{session.role.replaceAll("_", " ")}</span>
+          <h2>{organization?.name ?? "Organization unavailable"}</h2>
+          <p>
+            {organization
+              ? organization.type.replaceAll("_", " ") + " · " + organization.status.replaceAll("_", " ")
+              : "No organization record is available for this session."}
+          </p>
+        </article>
+        <article className="panel">
+          <h2>Session security</h2>
+          <p>RAM sessions are signed, HTTP-only and SameSite=Strict. Production cookies are Secure and expire after 12 hours.</p>
+        </article>
       </div>
+
+      <article className="panel">
+        <h2>Your permissions</h2>
+        <ul className="capabilityList">
+          {capabilities.map((capability) => (
+            <li key={capability.id} className={can(session.role, capability.id) ? "allowed" : "denied"}>
+              <span>{can(session.role, capability.id) ? "✓" : "—"}</span>
+              {capability.label}
+            </li>
+          ))}
+        </ul>
+      </article>
     </section>
   );
 }

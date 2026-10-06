@@ -1,10 +1,18 @@
+import { requireCapability } from "@/lib/access";
+import { requireSession } from "@/lib/auth/session";
+
 const reviews = [
   { id: "RAM-SW-0001902", species: "Swine", condition: "Chronic dermatitis", age: "14 mo", priority: "Routine", status: "Review required" },
   { id: "RAM-BO-0000988", species: "Bovine", condition: "Progressive lameness", age: "4 yr", priority: "Soon", status: "Diagnostics requested" },
   { id: "RAM-OV-0000504", species: "Ovine", condition: "Suspected cardiomyopathy", age: "3 yr", priority: "Routine", status: "Review required" }
 ];
 
-export default function VetPage() {
+export const dynamic = "force-dynamic";
+
+export default async function VetPage() {
+  const session = await requireSession();
+  requireCapability(session.role, "animal:verify");
+
   return (
     <section className="page">
       <div className="pageHeader">
