@@ -8,6 +8,11 @@ export type Capability =
   | "source:approve_disclosure"
   | "research_need:create"
   | "match:review"
+  | "order:reserve"
+  | "order:buyer_commit"
+  | "order:acquisition_commit"
+  | "order:clearance"
+  | "pricing:manage"
   | "operations:manage";
 
 const capabilityPermission: Record<Capability, Permission> = {
@@ -18,6 +23,11 @@ const capabilityPermission: Record<Capability, Permission> = {
   "source:approve_disclosure": "SOURCE_DISCLOSURE_APPROVE",
   "research_need:create": "RESEARCH_REQUEST_MANAGE",
   "match:review": "MATCH_REVIEW",
+  "order:reserve": "MATCH_REVIEW",
+  "order:buyer_commit": "QUOTE_APPROVE",
+  "order:acquisition_commit": "PAYOUT_MANAGE",
+  "order:clearance": "COMPLIANCE_REVIEW",
+  "pricing:manage": "PRICING_POLICY_MANAGE",
   "operations:manage": "MARKETPLACE_OPERATE"
 };
 
