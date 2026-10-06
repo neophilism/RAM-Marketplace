@@ -1,10 +1,18 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "esm"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum OrganizationStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  CLOSED
 }
 
 enum OrganizationType {
@@ -126,9 +134,10 @@ enum VeterinaryReviewOutcome {
 }
 
 model Organization {
-  id            String           @id @default(cuid())
+  id            String             @id @default(cuid())
   name          String
   type          OrganizationType
+  status        OrganizationStatus @default(PENDING_VERIFICATION)
   memberships   Membership[]
   farmSites     FarmSite[]
   facilities    Facility[]
@@ -141,6 +150,7 @@ model Organization {
 model User {
   id                 String              @id @default(cuid())
   email              String              @unique
+  emailVerifiedAt    DateTime?
   name               String
   memberships        Membership[]
   createdNeeds       ResearchNeed[]      @relation("ResearchNeedCreator")
@@ -185,6 +195,7 @@ model FarmSite {
   organizationId String
   internalLabel  String
   regionLabel    String
+  exactAddress   String
   organization   Organization          @relation(fields: [organizationId], references: [id])
   sourceRecords  AnimalSourceRecord[]
   permissions    FarmDisclosurePolicy?
