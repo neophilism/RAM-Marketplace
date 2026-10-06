@@ -14,6 +14,10 @@ const readyEnv = {
   RAM_IDENTITY_ALLOWED_PROVIDERS: "enterprise-oidc",
   RAM_IDENTITY_LOGIN_URL: "https://identity.example.test/login",
   RAM_IDENTITY_REQUIRE_MFA: "true",
+  RAM_PAYMENT_GATEWAY_NAME: "production-gateway",
+  RAM_PAYMENT_GATEWAY_URL: "https://payments.example.test",
+  RAM_PAYMENT_GATEWAY_SECRET: "separate-payment-gateway-secret-value-2026",
+  RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL: "false",
   RAM_DEMO_AUTH_ENABLED: "false",
   RAM_PUBLIC_ONBOARDING_ENABLED: "false",
   RAM_MAX_MUTATION_BYTES: "1048576"
@@ -66,6 +70,25 @@ test("pilot readiness blocks missing or weakened identity boundary", () => {
     "identity_providers",
     "identity_login_url",
     "identity_mfa"
+  ]) {
+    assert.equal(checks.find((check) => check.id === id)?.status, "BLOCK");
+  }
+});
+
+
+test("pilot readiness blocks insecure or shared payment gateway configuration", () => {
+  const checks = evaluatePilotReadiness({
+    ...readyEnv,
+    RAM_PAYMENT_GATEWAY_SECRET: readyEnv.AUTH_SECRET,
+    RAM_PAYMENT_GATEWAY_NAME: "",
+    RAM_PAYMENT_GATEWAY_URL: "http://127.0.0.1:4119",
+    RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL: "true"
+  });
+
+  for (const id of [
+    "payment_secret",
+    "payment_gateway_name",
+    "payment_gateway_url"
   ]) {
     assert.equal(checks.find((check) => check.id === id)?.status, "BLOCK");
   }

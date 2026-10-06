@@ -65,7 +65,10 @@ export function proxy(request: NextRequest) {
       // The external identity callback is authenticated by a short-lived,
       // HMAC-signed, one-time assertion rather than by an existing RAM cookie.
       // It may legitimately be POSTed from an upstream identity gateway.
-      if (request.nextUrl.pathname !== "/api/session/external") {
+      if (
+        request.nextUrl.pathname !== "/api/session/external" &&
+        request.nextUrl.pathname !== "/api/payments/webhook"
+      ) {
         assertSameOriginMutation(metadata, {
           production: process.env.NODE_ENV === "production"
         });

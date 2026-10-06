@@ -124,13 +124,13 @@ The readiness tool deliberately does not pretend these can be proven by environm
 - TLS / WAF / trusted forwarding / hard body limits;
 - encrypted backups and a tested restore;
 - monitoring, alerting, incident ownership and runbooks;
-- approved payment execution / payout process.
+- live payment gateway/provider credentials, payout-account ownership, webhook registration, provider failure/reversal semantics and reconciliation procedure.
 
 The super-admin `/ops/pilot` dashboard shows both automatic checks and these manual gates.
 
 ## Launch rule
 
-Passing both E2E jobs means the application workflows integrate correctly through both the prototype repository and a freshly migrated PostgreSQL database in the controlled CI harness.
+Passing both E2E jobs means the application workflows integrate correctly through both the prototype repository and a freshly migrated PostgreSQL database in the controlled CI harness. PostgreSQL CI also exercises signed payment initiation, authenticated provider success, duplicate-webhook idempotency and provider/ledger double-post protection.
 
 It does **not** by itself authorize real animal transactions.
 

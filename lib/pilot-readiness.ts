@@ -120,6 +120,47 @@ export function evaluatePilotReadiness(
         : "External identity assertions require MFA."
   });
 
+  const paymentSecret = env.RAM_PAYMENT_GATEWAY_SECRET;
+  const paymentUrl = env.RAM_PAYMENT_GATEWAY_URL ?? "";
+  const paymentName = env.RAM_PAYMENT_GATEWAY_NAME?.trim() ?? "";
+  const paymentSecretDistinct =
+    strongSecret(paymentSecret) &&
+    paymentSecret !== env.AUTH_SECRET &&
+    paymentSecret !== env.RAM_IDENTITY_ASSERTION_SECRET;
+
+  checks.push({
+    id: "payment_secret",
+    label: "Payment gateway signing secret",
+    status: paymentSecretDistinct ? "PASS" : "BLOCK",
+    detail: paymentSecretDistinct
+      ? "Payment gateway uses a strong secret distinct from session and identity secrets."
+      : "Configure RAM_PAYMENT_GATEWAY_SECRET with at least 32 non-placeholder characters and keep it distinct from AUTH_SECRET and RAM_IDENTITY_ASSERTION_SECRET."
+  });
+
+  checks.push({
+    id: "payment_gateway_name",
+    label: "Payment gateway identifier",
+    status: paymentName ? "PASS" : "BLOCK",
+    detail: paymentName
+      ? "Payment gateway identifier is configured."
+      : "Configure RAM_PAYMENT_GATEWAY_NAME."
+  });
+
+  checks.push({
+    id: "payment_gateway_url",
+    label: "Payment gateway HTTPS endpoint",
+    status:
+      /^https:\/\//i.test(paymentUrl) &&
+      env.RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL !== "true"
+        ? "PASS"
+        : "BLOCK",
+    detail:
+      /^https:\/\//i.test(paymentUrl) &&
+      env.RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL !== "true"
+        ? "Payment gateway endpoint uses HTTPS and the local insecure override is disabled."
+        : "Configure an HTTPS RAM_PAYMENT_GATEWAY_URL and disable RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL."
+  });
+
   const mutationBytes = Number(env.RAM_MAX_MUTATION_BYTES ?? "1048576");
   checks.push({
     id: "mutation_limit",
@@ -144,7 +185,7 @@ export function evaluatePilotReadiness(
     ["edge", "TLS / WAF / hard body limits", "Confirm TLS termination, trusted forwarding, WAF throttling and edge body-size enforcement."],
     ["backups", "Backup / restore exercise", "Confirm encrypted backups and complete a tested restore exercise."],
     ["monitoring", "Monitoring / incident response", "Confirm centralized logs, alerting, escalation ownership and incident runbooks."],
-    ["payments", "Payment execution controls", "Confirm the approved process or provider for executing buyer payments, refunds and payouts around the RAM ledger."]
+    ["payments", "Payment provider operational validation", "Validate live provider credentials, webhook registration, payout-account ownership, failure escalation, and accounting reconciliation against the RAM ledger."]
   ] as const;
 
   for (const [id, label, detail] of manual) {

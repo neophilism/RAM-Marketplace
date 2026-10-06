@@ -46,7 +46,9 @@ Money movements require an external accounting, bank, processor, credit-memo or 
 
 A credit reduces the effective buyer receivable without rewriting the original quote. A refund returns previously paid cash and is allowed only when credits create a refund due.
 
-This version records externally executed money movements; it does not itself move funds through a bank or payment processor. A payment-provider integration can later write the same ledger events from authenticated provider callbacks.
+RAM now supports provider-neutral execution for buyer collections, supplier payouts and buyer refunds. Creating/submitting an execution does not change the ledger. An authenticated successful provider webhook appends the corresponding money-movement entry exactly once.
+
+Manual entry remains available for externally executed/reconciliation-required movements, but is blocked while a provider execution of the same movement type is unresolved. See `docs/PAYMENTS.md`.
 
 ## Supplier payout timing
 
@@ -89,4 +91,4 @@ See `docs/DISPUTES.md`.
 
 The finance settlement surface uses order/animal identifiers and monetary snapshots. It does not require farm identity, farm exact location, research rationale or match score.
 
-Source payout routing and actual bank credentials belong in a future payment-provider / secure payout integration rather than in general marketplace records.
+Source payout routing and bank credentials remain outside general marketplace records. RAM stores gateway/provider references and execution state, not raw bank credentials. Provider-specific account/token custody belongs at the trusted payment gateway boundary.
