@@ -33,6 +33,9 @@ const animal = {
     "Stable vestibular function",
     "No otitis externa"
   ],
+  etiology: "Naturally progressive sensorineural disorder",
+  comorbidities: ["Mild osteoarthritis"],
+  diagnosticEvidence: ["ABR confirms bilateral threshold elevation"],
   publicSummary: "Naturally occurring bilateral auditory impairment.",
   listPriceCents: 780_000,
   transportReady: true,
@@ -74,4 +77,16 @@ test("missing constrained demographics become explicit review flags, not assumed
   assert.equal(result.hardGates.find((gate) => gate.gate === "age")?.state, "REVIEW");
   assert.ok(result.reviewFlags.some((flag) => /age/i.test(flag)));
   assert.ok(result.reviewFlags.some((flag) => /sex/i.test(flag)));
+});
+
+
+test("required diagnostics create a review flag when evidence is absent", () => {
+  const result = scoreMatch({ ...animal, diagnosticEvidence: [] }, need);
+  assert.equal(result.eligible, true);
+  assert.equal(
+    result.hardGates.find((gate) => gate.gate === "required_diagnostics")?.state,
+    "REVIEW"
+  );
+  assert.ok(result.reviewFlags.some((flag) => /diagnostics/i.test(flag)));
+  assert.ok(result.components.diagnosticConfidence <= 10);
 });
