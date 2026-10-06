@@ -26,7 +26,7 @@ Commercial commitment, legal title and physical custody are distinct concepts in
 3. **Veterinary workspace** — accept assignments, characterize phenotype, attach diagnostics, assess communicability and transport fitness, and escalate welfare/integrity concerns.
 4. **Transport workspace** — receive minimum-necessary pickup/delivery data, record chain of custody, sanitation and incidents.
 5. **Receiving workspace** — buyer-institution compliance staff inspect delivered animals and record acceptance or rejection without source-side access.
-6. **RAM operations** — triage, matching, disclosure review, compliance, exceptions, logistics, finance and audit history.
+6. **RAM operations** — triage, matching, disclosure review, compliance, rejected-receipt disputes, exceptions, logistics, finance and audit history.
 
 ## Canonical candidate lifecycle
 
@@ -102,7 +102,7 @@ Authorization will combine role permissions with organization, facility, order r
 
 ## Current transactional implementation
 
-The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, acquisition-time financial obligations, compliance clearance, transport assignment, chain-of-custody events, delivery, institutional receiving decisions, payment/payout ledger entries, settlement and financial reconciliation. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
+The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, acquisition-time financial obligations, compliance clearance, transport assignment, chain-of-custody events, delivery, institutional receiving decisions, rejected-receipt disputes, buyer credits/refunds, payment/payout ledger entries, settlement and financial reconciliation. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
 
 The supplier-acquisition decision surface is intentionally blind to buyer identity and buyer price. Buyer-facing order projections are independently guarded from supplier economics and source identity. See `docs/TRANSACTIONS.md`.
 
@@ -120,7 +120,7 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 10. Compliance clearance + logistics — implemented through delivery
 11. Receiving acceptance — implemented through `ACCEPTED` / `REJECTED_AT_RECEIPT`
 12. Payment/payout ledger, settlement and reconciliation — implemented
-13. Rejected-receipt disputes, replacements, credits and refunds
+13. Rejected-receipt disputes, replacements, credits and refunds — implemented
 14. Audit/security hardening
 15. End-to-end tests and pilot deployment
 

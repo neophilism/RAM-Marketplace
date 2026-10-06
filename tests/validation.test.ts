@@ -219,3 +219,44 @@ test("financial reconciliation requires an explicit attestation", async () => {
     false
   );
 });
+
+
+test("buyer credit and refund are valid financial movement types", async () => {
+  const { financialMovementSchema } = await import("../lib/validation");
+
+  for (const movementType of ["BUYER_CREDIT", "BUYER_REFUND"] as const) {
+    assert.equal(
+      financialMovementSchema.safeParse({
+        settlementId: "FS-001",
+        movementType,
+        amountUsd: 100,
+        externalReference: "adjustment-123"
+      }).success,
+      true
+    );
+  }
+});
+
+test("dispute resolution requires rationale and attestation", async () => {
+  const { disputeResolutionSchema } = await import("../lib/validation");
+
+  assert.equal(
+    disputeResolutionSchema.safeParse({
+      disputeId: "OD-001",
+      resolutionType: "REPLACEMENT",
+      resolutionNotes: "Receiving findings justify a replacement and full financial unwind.",
+      operatorAttestation: true
+    }).success,
+    true
+  );
+
+  assert.equal(
+    disputeResolutionSchema.safeParse({
+      disputeId: "OD-001",
+      resolutionType: "REFUND",
+      resolutionNotes: "short",
+      operatorAttestation: false
+    }).success,
+    false
+  );
+});

@@ -26,6 +26,7 @@ export default async function OpsPage() {
 
       <div className="formActions">
         <Link className="secondaryButton" href="/ops/logistics">Transport & chain of custody</Link>
+        <Link className="secondaryButton" href="/ops/disputes">Receiving disputes</Link>
       </div>
 
       <div className="metricGrid">

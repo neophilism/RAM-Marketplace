@@ -128,7 +128,14 @@ export default async function OrderPage({
         <article className="panel">
           <h2>Rejected at receipt</h2>
           <p>{order.receiptDiscrepancyNotes ?? "The receiving inspection documented a blocking discrepancy."}</p>
-          <p className="finePrint">The research need remains unstarted while the rejection proceeds to later dispute/replacement/refund handling.</p>
+        </article>
+      )}
+
+      {order.status === "DISPUTED" && (
+        <article className="panel">
+          <h2>Receiving dispute under RAM review</h2>
+          <p>{order.receiptDiscrepancyNotes ?? "The receiving inspection documented a blocking discrepancy."}</p>
+          <p className="finePrint">RAM is resolving whether the existing animal will be accepted, accepted with an adjustment, replaced through a reopened research need, or fully refunded.</p>
         </article>
       )}
 

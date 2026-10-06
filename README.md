@@ -40,7 +40,9 @@ The application now includes:
 - acquisition-time buyer receivable / supplier payable snapshots;
 - append-only buyer-payment and supplier-payout ledger with partial payments;
 - financial settlement and reconciliation through `SETTLED -> CLOSED`;
-- buyer, finance, compliance, transport and receiving transaction workspaces;
+- automatic rejected-receipt disputes with RAM operations resolution;
+- append-only buyer credits/refunds and replacement/refund unwind rules;
+- buyer, finance, compliance, transport, receiving and dispute transaction workspaces;
 - privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session and onboarding tests.
 
 ## Run locally
@@ -62,7 +64,7 @@ npm run db:push
 npm run dev
 ```
 
-See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, and `docs/DEPLOYMENT.md` for environment/deployment details.
+See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, `docs/DISPUTES.md` for rejected-receipt exceptions, and `docs/DEPLOYMENT.md` for environment/deployment details.
 
 ## Verification
 

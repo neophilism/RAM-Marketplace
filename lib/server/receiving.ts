@@ -3,6 +3,7 @@ import type { SessionPrincipal } from "@/lib/auth/token";
 import { requireCapability } from "@/lib/access";
 import { assertBuyerOrderProjection } from "@/lib/commercial-privacy";
 import { assertOrderTransition } from "@/lib/state-machines";
+import { assertDisputeOpenable } from "@/lib/dispute-policy";
 import { nextOrderStatusForReceiptDecision } from "@/lib/receiving-policy";
 import { requireResearchNeedTransition } from "@/lib/workflows";
 import type { ReceivingInspectionInput } from "@/lib/validation";
@@ -20,6 +21,7 @@ import {
   getPrototypeReceiptInspection,
   savePrototypeReceiptInspection
 } from "@/lib/server/receiving-prototype";
+import { createPrototypeOrderDispute } from "@/lib/server/disputes-prototype";
 
 export interface ReceivingOrderSummary {
   id: string;
@@ -71,7 +73,7 @@ export async function listReceivingOrders(
       .filter(
         (order) =>
           order.buyerOrganizationId === principal.organizationId &&
-          ["DELIVERED", "ACCEPTED", "REJECTED_AT_RECEIPT"].includes(order.status)
+          ["DELIVERED", "ACCEPTED", "REJECTED_AT_RECEIPT", "DISPUTED"].includes(order.status)
       )
       .map((order) => {
         const animal = getPrototypeAnimal(order.animalCaseId);
@@ -97,7 +99,7 @@ export async function listReceivingOrders(
   const rows = await prisma.order.findMany({
     where: {
       buyerOrganizationId: principal.organizationId,
-      status: { in: ["DELIVERED", "ACCEPTED", "REJECTED_AT_RECEIPT"] }
+      status: { in: ["DELIVERED", "ACCEPTED", "REJECTED_AT_RECEIPT", "DISPUTED"] }
     },
     orderBy: { updatedAt: "desc" },
     select: {
@@ -323,12 +325,23 @@ export async function recordReceivingInspection(
       notes: input.notes
     });
 
-    updatePrototypeOrder(order.id, { status: nextStatus });
-    if (input.decision === "ACCEPT" && need) {
-      updatePrototypeResearchNeed(need.id, { status: "IN_STUDY" });
+    if (input.decision === "ACCEPT") {
+      updatePrototypeOrder(order.id, { status: nextStatus });
+      if (need) {
+        updatePrototypeResearchNeed(need.id, { status: "IN_STUDY" });
+      }
+      return { orderId: order.id, status: nextStatus, inspection };
     }
 
-    return { orderId: order.id, status: nextStatus, inspection };
+    assertDisputeOpenable(nextStatus);
+    assertOrderTransition(nextStatus, "DISPUTED");
+    createPrototypeOrderDispute({
+      orderId: order.id,
+      reason: input.discrepancyNotes ?? "Rejected at receiving inspection",
+      openedByUserId: principal.userId
+    });
+    updatePrototypeOrder(order.id, { status: "DISPUTED" });
+    return { orderId: order.id, status: "DISPUTED" as const, inspection };
   }
 
   const prisma = requirePrisma();
@@ -385,34 +398,83 @@ export async function recordReceivingInspection(
         where: { id: order.researchNeedId },
         data: { status: "IN_STUDY" }
       });
+
+      await tx.auditEvent.create({
+        data: {
+          actorUserId: principal.userId,
+          organizationId: principal.organizationId,
+          action: "ORDER_RECEIPT_ACCEPTED",
+          entityType: "Order",
+          entityId: order.id,
+          previousState: { status: order.status },
+          nextState: {
+            status: nextStatus,
+            receiptDecision: inspection.decision
+          },
+          metadata: {
+            animalIdentityConfirmed: input.animalIdentityConfirmed,
+            movementDocumentsReceived: input.movementDocumentsReceived,
+            physicalConditionConsistent: input.physicalConditionConsistent,
+            welfareIntakeAcceptable: input.welfareIntakeAcceptable,
+            inspectorAttestation: input.inspectorAttestation
+          }
+        }
+      });
+
+      return { orderId: order.id, status: nextStatus, inspection };
     }
 
-    await tx.auditEvent.create({
+    assertDisputeOpenable(nextStatus);
+    assertOrderTransition(nextStatus, "DISPUTED");
+
+    const dispute = await tx.orderDispute.create({
       data: {
-        actorUserId: principal.userId,
-        organizationId: principal.organizationId,
-        action:
-          input.decision === "ACCEPT"
-            ? "ORDER_RECEIPT_ACCEPTED"
-            : "ORDER_RECEIPT_REJECTED",
-        entityType: "Order",
-        entityId: order.id,
-        previousState: { status: order.status },
-        nextState: {
-          status: nextStatus,
-          receiptDecision: inspection.decision
-        },
-        reason: input.discrepancyNotes ?? null,
-        metadata: {
-          animalIdentityConfirmed: input.animalIdentityConfirmed,
-          movementDocumentsReceived: input.movementDocumentsReceived,
-          physicalConditionConsistent: input.physicalConditionConsistent,
-          welfareIntakeAcceptable: input.welfareIntakeAcceptable,
-          inspectorAttestation: input.inspectorAttestation
-        }
+        orderId: order.id,
+        reason: input.discrepancyNotes ?? "Rejected at receiving inspection",
+        openedByUserId: principal.userId
       }
     });
 
-    return { orderId: order.id, status: nextStatus, inspection };
+    await tx.order.update({
+      where: { id: order.id },
+      data: { status: "DISPUTED" }
+    });
+
+    await tx.auditEvent.createMany({
+      data: [
+        {
+          actorUserId: principal.userId,
+          organizationId: principal.organizationId,
+          action: "ORDER_RECEIPT_REJECTED",
+          entityType: "Order",
+          entityId: order.id,
+          previousState: { status: order.status },
+          nextState: {
+            status: nextStatus,
+            receiptDecision: inspection.decision
+          },
+          reason: input.discrepancyNotes ?? null,
+          metadata: {
+            animalIdentityConfirmed: input.animalIdentityConfirmed,
+            movementDocumentsReceived: input.movementDocumentsReceived,
+            physicalConditionConsistent: input.physicalConditionConsistent,
+            welfareIntakeAcceptable: input.welfareIntakeAcceptable,
+            inspectorAttestation: input.inspectorAttestation
+          }
+        },
+        {
+          actorUserId: principal.userId,
+          organizationId: principal.organizationId,
+          action: "RECEIPT_DISPUTE_OPENED",
+          entityType: "OrderDispute",
+          entityId: dispute.id,
+          previousState: { orderStatus: nextStatus },
+          nextState: { orderStatus: "DISPUTED", disputeStatus: "OPEN" },
+          reason: dispute.reason
+        }
+      ]
+    });
+
+    return { orderId: order.id, status: "DISPUTED" as const, inspection, dispute };
   });
 }

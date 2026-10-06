@@ -37,13 +37,13 @@ A rejection requires:
 - a documented discrepancy description;
 - inspector attestation.
 
-Rejection advances the order:
+Rejection records the intermediate receipt state and immediately opens a formal RAM dispute:
 
-`DELIVERED -> REJECTED_AT_RECEIPT`
+`DELIVERED -> REJECTED_AT_RECEIPT -> DISPUTED`
 
 The research need remains `ORDERED` because the study has not begun with the rejected animal.
 
-Dispute, replacement, refund and settlement handling are separate later layers.
+RAM operations then resolves the dispute under `docs/DISPUTES.md`.
 
 ## Privacy
 

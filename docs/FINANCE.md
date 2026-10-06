@@ -35,12 +35,16 @@ Opening entries:
 - `SUPPLIER_PAYABLE`
 - `DIRECT_COST` when non-zero
 
-Money-movement entries:
+Money-movement / adjustment entries:
 
 - `BUYER_PAYMENT`
 - `SUPPLIER_PAYOUT`
+- `BUYER_CREDIT`
+- `BUYER_REFUND`
 
-Money movements require an external accounting, bank or processor reference. Partial movements are supported. The application rejects any movement that would exceed the remaining obligation.
+Money movements require an external accounting, bank, processor, credit-memo or dispute reference. Partial movements are supported. The application rejects any movement that exceeds the available balance.
+
+A credit reduces the effective buyer receivable without rewriting the original quote. A refund returns previously paid cash and is allowed only when credits create a refund due.
 
 This version records externally executed money movements; it does not itself move funds through a bank or payment processor. A payment-provider integration can later write the same ledger events from authenticated provider callbacks.
 
@@ -72,6 +76,14 @@ That advances:
 `SETTLED -> CLOSED`
 
 Financial closure does not complete the scientific study. The research need may remain `IN_STUDY` until its separate scientific lifecycle is completed.
+
+## Disputed receipts
+
+Rejected-receipt disputes may use credits and refunds while the settlement remains `OPEN`.
+
+Replacement and refund resolutions require the original buyer receivable to be fully credited, any resulting refund due to be paid, and the supplier payable to be fully satisfied. The supplier payable itself is never changed by the dispute.
+
+See `docs/DISPUTES.md`.
 
 ## Privacy
 
