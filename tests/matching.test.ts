@@ -90,3 +90,17 @@ test("required diagnostics create a review flag when evidence is absent", () => 
   assert.ok(result.reviewFlags.some((flag) => /diagnostics/i.test(flag)));
   assert.ok(result.components.diagnosticConfidence <= 10);
 });
+
+
+test("explicit exclusion criteria are hard gates", () => {
+  const excluded = scoreMatch(
+    { ...animal, comorbidities: ["Active ear infection"] },
+    need
+  );
+  assert.equal(excluded.eligible, false);
+  assert.equal(excluded.totalScore, 0);
+  assert.equal(
+    excluded.hardGates.find((gate) => gate.gate === "exclusion_criteria")?.state,
+    "FAIL"
+  );
+});
