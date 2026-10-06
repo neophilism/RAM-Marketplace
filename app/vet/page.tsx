@@ -1,17 +1,12 @@
-import { requireCapability } from "@/lib/access";
+import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
-
-const reviews = [
-  { id: "RAM-SW-0001902", species: "Swine", condition: "Chronic dermatitis", age: "14 mo", priority: "Routine", status: "Review required" },
-  { id: "RAM-BO-0000988", species: "Bovine", condition: "Progressive lameness", age: "4 yr", priority: "Soon", status: "Diagnostics requested" },
-  { id: "RAM-OV-0000504", species: "Ovine", condition: "Suspected cardiomyopathy", age: "3 yr", priority: "Routine", status: "Review required" }
-];
+import { listVeterinaryQueue } from "@/lib/server/clinical";
 
 export const dynamic = "force-dynamic";
 
 export default async function VetPage() {
   const session = await requireSession();
-  requireCapability(session.role, "animal:verify");
+  const reviews = await listVeterinaryQueue(session);
 
   return (
     <section className="page">
@@ -23,34 +18,33 @@ export default async function VetPage() {
         </div>
       </div>
 
-      <div className="metricGrid">
-        <article><strong>9</strong><span>Awaiting review</span></article>
-        <article><strong>4</strong><span>Diagnostics pending</span></article>
-        <article><strong>2</strong><span>Welfare holds</span></article>
-        <article><strong>18h</strong><span>Median review time</span></article>
-      </div>
-
       <div className="tableCard">
-        <div className="tableRow tableHead"><span>Animal</span><span>Condition</span><span>Priority</span><span>Status</span></div>
-        {reviews.map((review) => (
+        <div className="tableRow tableHead"><span>Animal</span><span>Condition</span><span>Status</span><span>Action</span></div>
+        {reviews.length === 0 ? (
+          <div className="emptyState">No candidates currently require veterinary review.</div>
+        ) : reviews.map((review) => (
           <div className="tableRow" key={review.id}>
-            <div><strong>{review.id}</strong><div className="subtle">{review.species} · {review.age}</div></div>
+            <div><strong>{review.id}</strong><div className="subtle">{review.species} · {review.ageLabel}</div></div>
             <span>{review.condition}</span>
-            <strong>{review.priority}</strong>
-            <span className="status">{review.status}</span>
+            <span className="status">{review.status.replaceAll("_", " ")}</span>
+            <div>
+              {review.status === "PRE_SCREENED" ? (
+                <form action={"/api/vet/candidates/" + review.id + "/claim"} method="post">
+                  <button className="secondaryButton" type="submit">Claim review</button>
+                </form>
+              ) : review.assignedToMe ? (
+                <Link className="primaryButton" href={"/vet/" + review.id}>Continue review</Link>
+              ) : (
+                <span className="subtle">Assigned to another veterinarian</span>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="detailGrid">
-        <article className="panel">
-          <h2>Verification gate</h2>
-          <p>Confirm diagnosis or define the diagnostic workup, assess welfare suitability, determine whether the condition is naturally occurring, and identify any biosecurity or transport restrictions.</p>
-        </article>
-        <article className="panel">
-          <h2>Possible outcomes</h2>
-          <p>Eligible · Needs diagnostics · Ineligible · Welfare hold. Only eligible cases may advance to verified/available marketplace status.</p>
-        </article>
+      <div className="panel">
+        <h2>Clinical gate</h2>
+        <p>Eligible cases advance only to VERIFIED. RAM operations must separately approve pricing, disclosure and publication before a case becomes MATCHABLE.</p>
       </div>
     </section>
   );
