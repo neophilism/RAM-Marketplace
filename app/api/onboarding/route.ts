@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { attachSession, publicOnboardingEnabled } from "@/lib/auth/session";
 import {
-  landingPageForRole,
-  onboardingSchema
-} from "@/lib/onboarding";
+  attachSession,
+  clearEnrollmentIdentity,
+  publicOnboardingEnabled,
+  readEnrollmentIdentityFromRequest
+} from "@/lib/auth/session";
+import { onboardingSchema } from "@/lib/onboarding";
 import { createOnboardingAccount } from "@/lib/server/onboarding";
 import {
   enforceRequestRateLimit,
@@ -15,9 +17,11 @@ function blankToUndefined(value: FormDataEntryValue | null) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!publicOnboardingEnabled()) {
+  const verifiedIdentity = readEnrollmentIdentityFromRequest(request);
+
+  if (!verifiedIdentity && !publicOnboardingEnabled()) {
     return NextResponse.json(
-      { error: "Public onboarding is disabled on this deployment" },
+      { error: "Verified identity is required before organization onboarding" },
       { status: 403 }
     );
   }
@@ -43,8 +47,8 @@ export async function POST(request: NextRequest) {
 
   const form = await request.formData();
   const parsed = onboardingSchema.safeParse({
-    name: form.get("name"),
-    email: form.get("email"),
+    name: verifiedIdentity?.name ?? form.get("name"),
+    email: verifiedIdentity?.email ?? form.get("email"),
     organizationName: form.get("organizationName"),
     organizationType: form.get("organizationType"),
     regionLabel: blankToUndefined(form.get("regionLabel")),
@@ -60,10 +64,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const principal = await createOnboardingAccount(parsed.data);
+  const principal = await createOnboardingAccount(
+    parsed.data,
+    verifiedIdentity ?? undefined
+  );
   const response = NextResponse.redirect(
-    new URL(landingPageForRole(principal.role), request.url),
+    new URL("/account?onboarded=1", request.url),
     303
   );
+  clearEnrollmentIdentity(response);
   return attachSession(response, principal);
 }
