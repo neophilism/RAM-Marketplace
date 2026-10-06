@@ -28,7 +28,13 @@ The application now includes:
 - PostgreSQL/Prisma 7 durable repositories;
 - separate restricted `AnimalSourceRecord`;
 - audited candidate and research-need creation;
-- privacy, RBAC, state-machine, pricing, cull-provenance, session and onboarding tests.
+- explainable deterministic matching with hard exclusions;
+- reservation holds and buyer quote snapshots;
+- separate buyer commitment and RAM acquisition commitment;
+- species-based supplier acquisition policies blind to buyer value;
+- compliance clearance hard gates before pickup;
+- buyer, finance and compliance transaction workspaces;
+- privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session and onboarding tests.
 
 ## Run locally
 
@@ -49,7 +55,7 @@ npm run db:push
 npm run dev
 ```
 
-See `docs/ARCHITECTURE.md` for domain architecture and `docs/DEPLOYMENT.md` for environment/deployment details.
+See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, and `docs/DEPLOYMENT.md` for environment/deployment details.
 
 ## Verification
 
