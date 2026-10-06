@@ -209,15 +209,13 @@ export async function consumeExternalIdentity(
       }
     });
 
-    if (Math.random() < 0.02) {
-      await tx.identityAssertionUse.deleteMany({
-        where: {
-          expiresAt: {
-            lt: new Date(Date.now() - 24 * 60 * 60 * 1000)
-          }
+    await tx.identityAssertionUse.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(Date.now() - 24 * 60 * 60 * 1000)
         }
-      });
-    }
+      }
+    });
 
     let identity = await tx.externalIdentity.findUnique({
       where: {
@@ -322,11 +320,9 @@ export async function consumeExternalIdentity(
       });
     }
 
-    const memberships = await tx.membership.findMany({
+    const allMemberships = await tx.membership.findMany({
       where: {
-        userId: identity.userId,
-        status: { not: "REVOKED" },
-        organization: { status: { not: "CLOSED" } }
+        userId: identity.userId
       },
       include: {
         organization: {
@@ -341,7 +337,7 @@ export async function consumeExternalIdentity(
       orderBy: { createdAt: "asc" }
     });
 
-    if (memberships.length === 0) {
+    if (allMemberships.length === 0) {
       return {
         kind: "ENROLLMENT",
         userId: identity.user.id,
@@ -350,6 +346,18 @@ export async function consumeExternalIdentity(
         provider: assertion.provider,
         subject: assertion.subject
       };
+    }
+
+    const memberships = allMemberships.filter(
+      (membership) =>
+        membership.status !== "REVOKED" &&
+        membership.organization.status !== "CLOSED"
+    );
+
+    if (memberships.length === 0) {
+      throw new Error(
+        "Forbidden: no available organization membership; contact RAM access administration"
+      );
     }
 
     const choices = memberships.map((membership) => {
