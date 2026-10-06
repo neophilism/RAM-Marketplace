@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NewAnimalPage() {
   return (
     <section className="page narrow">
@@ -9,7 +11,7 @@ export default function NewAnimalPage() {
         </div>
       </div>
 
-      <form className="formStack">
+      <form className="formStack" action="/api/animal-cases" method="post">
         <section className="panel formSection">
           <div className="sectionNumber">01</div>
           <div>
@@ -56,7 +58,7 @@ export default function NewAnimalPage() {
         </section>
 
         <div className="formActions">
-          <button className="secondaryButton" type="button">Save draft</button>
+          <Link className="secondaryButton" href="/farm">Cancel</Link>
           <button className="primaryButton" type="submit">Submit for RAM triage</button>
         </div>
       </form>
