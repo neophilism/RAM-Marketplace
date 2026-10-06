@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MARKETPLACE_FORBIDDEN_KEYS, assertAnonymousMarketplaceRecord, toMarketplaceListing } from "@/lib/marketplace-projection";
+import { MARKETPLACE_FORBIDDEN_KEYS, assertAnonymousMarketplaceRecord, toMarketplaceListing } from "../lib/marketplace-projection";
 
 const restricted = {
   publicId: "RAM-SW-0001",
