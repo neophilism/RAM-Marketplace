@@ -38,7 +38,10 @@ export async function getMarketplaceListings(): Promise<AnimalListing[]> {
   // Deliberately select only marketplace-safe AnimalCase columns.
   // No source-record relation is joined here.
   const rows = await prisma.animalCase.findMany({
-    where: { status: "MATCHABLE" },
+    where: {
+      status: "MATCHABLE",
+      sourceDisclosure: { not: "RAM_INTERNAL_ONLY" }
+    },
     orderBy: { updatedAt: "desc" },
     select: {
       publicId: true,
