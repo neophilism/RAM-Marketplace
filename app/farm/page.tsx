@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const cases = [
   { id: "RAM-SW-0001847", condition: "Hearing loss", status: "AVAILABLE", action: "2 researcher views" },
   { id: "RAM-SW-0001902", condition: "Chronic dermatitis", status: "VET_REVIEW", action: "Vet visit scheduled" },
@@ -9,7 +11,7 @@ export default function FarmPage() {
     <section className="page">
       <div className="pageHeader">
         <div><div className="eyebrow">Private farm portal</div><h1>Your animal cases</h1><p>Your farm identity is never presented as a public seller profile.</p></div>
-        <button className="primaryButton" type="button">Report an animal</button>
+        <Link className="primaryButton" href="/farm/new">Report an animal</Link>
       </div>
       <div className="privacyBanner"><strong>Source protection is on.</strong><span>Scientists see RAM animal IDs and approved scientific information—not your farm name, logo, address, or seller profile.</span></div>
       <div className="tableCard">
