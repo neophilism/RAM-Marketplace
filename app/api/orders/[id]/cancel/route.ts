@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = requireRequestSession(request);
+    const session = await requireRequestSession(request);
     const { id } = await params;
     await cancelBuyerOrder(session, id);
     return NextResponse.redirect(new URL("/orders/" + id, request.url), 303);

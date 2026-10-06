@@ -10,6 +10,10 @@ const readyEnv = {
   RAM_DATA_BACKEND: "postgres",
   DATABASE_URL: "postgresql://ram:secret@db.internal:5432/ram",
   AUTH_SECRET: "this-is-a-production-strength-secret-value-2026",
+  RAM_IDENTITY_ASSERTION_SECRET: "separate-identity-assertion-secret-value-2026",
+  RAM_IDENTITY_ALLOWED_PROVIDERS: "enterprise-oidc",
+  RAM_IDENTITY_LOGIN_URL: "https://identity.example.test/login",
+  RAM_IDENTITY_REQUIRE_MFA: "true",
   RAM_DEMO_AUTH_ENABLED: "false",
   RAM_PUBLIC_ONBOARDING_ENABLED: "false",
   RAM_MAX_MUTATION_BYTES: "1048576"
@@ -44,5 +48,25 @@ test("pilot readiness rejects placeholder or short auth secrets", () => {
       checks.find((check) => check.id === "auth_secret")?.status,
       "BLOCK"
     );
+  }
+});
+
+
+test("pilot readiness blocks missing or weakened identity boundary", () => {
+  const checks = evaluatePilotReadiness({
+    ...readyEnv,
+    RAM_IDENTITY_ASSERTION_SECRET: readyEnv.AUTH_SECRET,
+    RAM_IDENTITY_ALLOWED_PROVIDERS: "",
+    RAM_IDENTITY_LOGIN_URL: "http://identity.example.test/login",
+    RAM_IDENTITY_REQUIRE_MFA: "false"
+  });
+
+  for (const id of [
+    "identity_secret",
+    "identity_providers",
+    "identity_login_url",
+    "identity_mfa"
+  ]) {
+    assert.equal(checks.find((check) => check.id === id)?.status, "BLOCK");
   }
 });

@@ -5,7 +5,7 @@ import { disclosureRequestSchema } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = requireRequestSession(request);
+    const session = await requireRequestSession(request);
     const form = await request.formData();
     const parsed = disclosureRequestSchema.safeParse({
       animalCaseId: form.get("animalCaseId"),

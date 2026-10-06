@@ -18,9 +18,9 @@ RAM sessions use:
 - 12-hour expiry;
 - role and organization claims validated on every token parse.
 
-Every protected data action re-checks authentication and RBAC in the route/service layer. Page routing alone is not treated as authorization.
+Every protected data action re-checks authentication and RBAC in the route/service layer. In PostgreSQL mode, protected requests additionally re-check verified email, membership status and organization status against durable records. Page routing and a valid cookie alone are not treated as authorization.
 
-Production demo authentication and public self-onboarding remain disabled by default.
+Production external identity assertions are HMAC-signed with a dedicated secret, restricted to an explicit provider allowlist, require verified email/MFA policy, expire within five minutes and carry a one-time `jti` persisted in `IdentityAssertionUse`. Production demo authentication and unverified public self-onboarding remain disabled by default.
 
 ## Cross-site mutation protection
 
@@ -32,6 +32,8 @@ Unsafe methods are rejected when:
 - `Origin` or `Referer` does not match the application origin;
 - production receives an unsafe request without a usable same-origin source;
 - declared request size exceeds `RAM_MAX_MUTATION_BYTES`.
+
+The sole cross-origin mutation exception is `POST /api/session/external`. That endpoint does not trust an existing browser session; it authenticates a short-lived signed one-time identity assertion and remains subject to request-size limits and rate limiting.
 
 Local development permits origin-less requests so command-line testing remains practical.
 
@@ -68,7 +70,8 @@ Rate-limit keys are HMAC-derived from address + user agent. Raw client addresses
 Current defaults:
 
 - public onboarding: 5 requests per hour per fingerprint;
-- demo authentication: 120 requests per 10 minutes per fingerprint.
+- demo authentication: 120 requests per 10 minutes per fingerprint;
+- signed external identity callback: 60 requests per 10 minutes per fingerprint.
 
 Production should still add edge/WAF throttling because application-layer rate limits are not a substitute for network-level denial-of-service protection.
 
@@ -134,10 +137,10 @@ Formal retention periods for business, veterinary, research, transport, source, 
 
 ## Remaining production work
 
-This PR hardens the application boundary but does not replace:
+The RAM application identity boundary does not replace validation and operation of the actual upstream identity provider/gateway. Remaining production work includes:
 
-- an external identity provider / email verification;
-- provider-side MFA / enterprise SSO;
+- provider-side MFA / enterprise SSO configuration and claim-mapping validation;
+- identity signing-secret rotation and provider incident procedures;
 - payment-provider authentication and webhook verification;
 - object-storage malware scanning for future uploads;
 - infrastructure penetration testing;

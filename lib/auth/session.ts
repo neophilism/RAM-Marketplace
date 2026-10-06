@@ -6,8 +6,18 @@ import {
   verifySessionToken,
   type SessionPrincipal
 } from "@/lib/auth/token";
+import {
+  createEnrollmentToken,
+  verifyEnrollmentToken,
+  type EnrollmentIdentity
+} from "@/lib/auth/enrollment-token";
+import {
+  getAccountAccessContext,
+  requireOperationalPrincipal
+} from "@/lib/server/identity";
 
 export const SESSION_COOKIE = "ram_session";
+export const ENROLLMENT_COOKIE = "ram_identity_enrollment";
 
 export function getSessionSecret() {
   const configured = process.env.AUTH_SECRET;
@@ -49,13 +59,41 @@ export function readSessionFromRequest(request: NextRequest) {
 export async function requireSession() {
   const session = await readSession();
   if (!session) throw new Error("Authentication required");
-  return session;
+  return requireOperationalPrincipal(session);
 }
 
-export function requireRequestSession(request: NextRequest) {
+export async function requireAccountSession() {
+  const session = await readSession();
+  if (!session) throw new Error("Authentication required");
+  const access = await getAccountAccessContext(session);
+  return {
+    session: {
+      ...access.principal,
+      exp: session.exp
+    },
+    access
+  };
+}
+
+export async function requireRequestSession(request: NextRequest) {
   const session = readSessionFromRequest(request);
   if (!session) throw new Error("Authentication required");
-  return session;
+  return requireOperationalPrincipal(session);
+}
+
+export async function readEnrollmentIdentity() {
+  const jar = await cookies();
+  return verifyEnrollmentToken(
+    jar.get(ENROLLMENT_COOKIE)?.value,
+    getSessionSecret()
+  );
+}
+
+export function readEnrollmentIdentityFromRequest(request: NextRequest) {
+  return verifyEnrollmentToken(
+    request.cookies.get(ENROLLMENT_COOKIE)?.value,
+    getSessionSecret()
+  );
 }
 
 export function attachSession(
@@ -73,6 +111,35 @@ export function attachSession(
       maxAge: 60 * 60 * 12
     }
   );
+  return response;
+}
+
+export function attachEnrollmentIdentity(
+  response: NextResponse,
+  identity: Omit<EnrollmentIdentity, "exp">
+) {
+  response.cookies.set(
+    ENROLLMENT_COOKIE,
+    createEnrollmentToken(identity, getSessionSecret()),
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 20 * 60
+    }
+  );
+  return response;
+}
+
+export function clearEnrollmentIdentity(response: NextResponse) {
+  response.cookies.set(ENROLLMENT_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+    maxAge: 0
+  });
   return response;
 }
 

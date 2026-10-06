@@ -24,7 +24,7 @@ It then launches that built application with:
 
 The test therefore exercises the built routing/session/middleware/service stack while avoiding production credentials.
 
-A second CI job now provisions an empty PostgreSQL 16 service, deploys the committed migration history, seeds the same controlled identities and reruns these workflows against the durable repository implementation. It then dumps the populated database, restores it into a second database and verifies critical business/audit record counts and Prisma migration status.
+A second CI job now provisions an empty PostgreSQL 16 service, deploys the committed migration history, seeds the same controlled identities and reruns these workflows against the durable repository implementation. The same running application then exercises signed external identity login, assertion replay rejection, membership suspension/reactivation, organization suspension/reactivation, verified new-user onboarding, pending-organization blocking and RAM approval. It then dumps the populated database, restores it into a second database and verifies critical business/audit/identity record counts and Prisma migration status.
 
 ## Happy-path scenario
 
@@ -105,6 +105,10 @@ The command automatically checks:
 - production runtime;
 - PostgreSQL backend and URL;
 - session-secret strength;
+- separate external identity assertion-secret strength;
+- external identity provider allowlist;
+- HTTPS identity login URL;
+- MFA requirement enabled;
 - demo authentication disabled;
 - unverified public onboarding disabled;
 - reviewed mutation-size configuration.
@@ -115,7 +119,7 @@ A non-zero exit code means automatically verifiable configuration is blocked.
 
 The readiness tool deliberately does not pretend these can be proven by environment inspection:
 
-- production identity proofing / MFA or SSO;
+- validation of the real upstream identity provider/gateway, MFA signal mapping and signing-secret operations;
 - production application of the reviewed migration history and clean migration status;
 - TLS / WAF / trusted forwarding / hard body limits;
 - encrypted backups and a tested restore;

@@ -98,7 +98,11 @@ Every score must preserve component values, reason strings, evidence and confide
 
 Users can hold one or more organization memberships rather than a single global role. Canonical membership roles and permissions live in `lib/rbac.ts`. Additional privacy capabilities prohibit research users from reading restricted source records and reserve source disclosure approval to authorized supplier/RAM roles.
 
-Authorization will combine role permissions with organization, facility, order relationship and assignment attributes.
+Production identity proofing is provider-neutral: an upstream identity provider/gateway produces a short-lived signed assertion, RAM links the stable provider subject to a user, and the RAM session is scoped to one organization membership. A cryptographically valid cookie is not sufficient by itself; PostgreSQL-backed protected requests re-check verified email, membership status and organization status on every request. Pending/suspended accounts may see account status but cannot perform operations.
+
+Organization onboarding creates a pending organization and explicit verification record. RAM super admins approve/reject organizations and activate/suspend/revoke memberships through the identity/access control plane. All lifecycle changes are audit logged.
+
+Authorization combines role permissions with durable membership/organization state, organization, facility, order relationship and assignment attributes.
 
 ## Current transactional implementation
 
@@ -124,8 +128,9 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 14. Audit/security hardening — implemented at application boundary
 15. Live multi-role end-to-end tests and pilot-readiness tooling — implemented
 16. Reviewed PostgreSQL migrations, PostgreSQL E2E and backup/restore verification — implemented
-17. External identity/payment integrations, production monitoring and pilot deployment
+17. Production identity, verified onboarding and account lifecycle — implemented at the RAM application boundary
+18. Payment-provider integration, production monitoring and pilot deployment
 
 ## Test policy
 
-CI protects non-negotiable business rules, not just UI compilation. Unit/domain/security tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, RBAC separation, restricted-source authorization, marketplace anonymization and append-only records. After the production build, CI launches the built application in isolated prototype mode and drives live HTTP scenarios across supplier, researcher, veterinary, RAM operations, procurement, finance, compliance, transport and receiving roles. A second CI job provisions empty PostgreSQL, deploys the committed migration history, checks live schema drift, seeds controlled identities, runs the same multi-role E2E against PostgreSQL, and verifies a populated `pg_dump` can be restored into a second database with matching critical record counts. See `docs/PILOT.md` and `docs/DATABASE.md`.
+CI protects non-negotiable business rules, not just UI compilation. Unit/domain/security tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, RBAC separation, restricted-source authorization, marketplace anonymization and append-only records. After the production build, CI launches the built application in isolated prototype mode and drives live HTTP scenarios across supplier, researcher, veterinary, RAM operations, procurement, finance, compliance, transport and receiving roles. A second CI job provisions empty PostgreSQL, deploys the committed migration history, checks live schema drift, seeds controlled identities, runs the same multi-role E2E against PostgreSQL, exercises signed external identity login/replay prevention/verified onboarding/immediate membership and organization revocation, and verifies a populated `pg_dump` can be restored into a second database with matching critical record counts. See `docs/PILOT.md` and `docs/DATABASE.md`.

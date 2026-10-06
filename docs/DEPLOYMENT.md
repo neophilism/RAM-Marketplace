@@ -7,7 +7,11 @@ RAM fails closed toward PostgreSQL in production. A deployment should set:
 - `DATABASE_URL` — PostgreSQL connection string.
 - `RAM_DATA_BACKEND=postgres`.
 - `AUTH_SECRET` — long random secret used to sign HTTP-only session cookies.
-- `RAM_PUBLIC_ONBOARDING_ENABLED=false` until the chosen external identity provider / email-verification path is connected.
+- `RAM_IDENTITY_ASSERTION_SECRET` — separate long random secret shared only with the trusted identity gateway.
+- `RAM_IDENTITY_ALLOWED_PROVIDERS` — comma-separated exact provider identifiers accepted in signed assertions.
+- `RAM_IDENTITY_LOGIN_URL` — HTTPS entry point for the upstream identity provider/gateway.
+- `RAM_IDENTITY_REQUIRE_MFA=true`.
+- `RAM_PUBLIC_ONBOARDING_ENABLED=false`.
 - `RAM_DEMO_AUTH_ENABLED=false`.
 - `RAM_MAX_MUTATION_BYTES=1048576` unless a different reviewed application limit is required.
 
@@ -51,7 +55,11 @@ RAM currently implements the application session boundary:
 - protected farm, research, veterinary, operations and account routes.
 - API routes independently re-check authentication and RBAC close to the data operation.
 
-The external identity proofing mechanism is deliberately deployment-configurable. Local development can use environment-gated demo identities. Production demo auth is off unless explicitly enabled.
+Production identity proofing is deliberately provider-neutral. The upstream provider/gateway authenticates the user, verifies email/MFA, and POSTs a short-lived HMAC-signed one-time assertion to `/api/session/external`. RAM validates the provider allowlist, signature, audience, MFA signal, lifetime and replay ID before issuing a RAM session.
+
+For PostgreSQL-backed requests, RAM then re-checks durable membership and organization status on every protected request. A still-valid cookie immediately loses operational authority when its membership or organization is suspended.
+
+Local development can use environment-gated demo identities. Production demo auth is off unless explicitly enabled. See `docs/IDENTITY.md`.
 
 ## Request security
 
@@ -67,7 +75,7 @@ See `docs/SECURITY.md` for the complete application/infrastructure split.
 
 ## Onboarding
 
-Self-onboarding creates an organization, its first user membership and—for farms—a restricted farm-site record. New organizations begin in `PENDING_VERIFICATION`.
+Production self-onboarding begins only after a verified external identity. RAM binds the verified user to the enrollment flow, creates the organization and first membership, and creates an explicit organization-verification record. New organizations begin in `PENDING_VERIFICATION` and cannot perform operational actions until a RAM super admin approves them.
 
 Farm exact address and source identity remain in the restricted source layer and never become marketplace fields.
 
@@ -77,7 +85,7 @@ After provisioning PostgreSQL:
 
 ```bash
 cp .env.example .env
-# edit DATABASE_URL and AUTH_SECRET
+# edit DATABASE_URL, AUTH_SECRET and RAM_IDENTITY_* configuration
 npm install
 npm run prisma:validate
 npm run db:migrate:deploy
@@ -96,6 +104,6 @@ Run `npm run pilot:check` against the intended production environment. A non-zer
 
 RAM also exposes a super-admin `/ops/pilot` dashboard with the same automatic checks plus manual deployment gates.
 
-CI runs the live workflow twice: once against isolated prototype storage and again against PostgreSQL created from the committed migration history. The PostgreSQL job also checks schema drift and performs a populated dump/restore comparison. These checks do not replace production-provider backup/PITR drills or external identity/payment validation.
+CI runs the live workflow twice: once against isolated prototype storage and again against PostgreSQL created from the committed migration history. The PostgreSQL job also exercises the signed external identity boundary, assertion replay prevention, verified onboarding, immediate durable-session revocation/reactivation, schema drift and populated dump/restore. These checks do not replace validation of the actual upstream identity provider/gateway, production-provider backup/PITR drills or payment-provider validation.
 
 See `docs/PILOT.md` before admitting real transactions.

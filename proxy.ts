@@ -62,9 +62,14 @@ export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api/")) {
     try {
       const metadata = requestMetadata(request);
-      assertSameOriginMutation(metadata, {
-        production: process.env.NODE_ENV === "production"
-      });
+      // The external identity callback is authenticated by a short-lived,
+      // HMAC-signed, one-time assertion rather than by an existing RAM cookie.
+      // It may legitimately be POSTed from an upstream identity gateway.
+      if (request.nextUrl.pathname !== "/api/session/external") {
+        assertSameOriginMutation(metadata, {
+          production: process.env.NODE_ENV === "production"
+        });
+      }
       assertMutationBodySize(metadata, MAX_MUTATION_BYTES);
     } catch (error) {
       const message =

@@ -5,7 +5,7 @@ import { reserveOrderSchema } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = requireRequestSession(request);
+    const session = await requireRequestSession(request);
     const form = await request.formData();
     const parsed = reserveOrderSchema.safeParse({
       animalCaseId: form.get("animalCaseId"),

@@ -14,8 +14,9 @@ test("PostgreSQL migration history is committed and provider-locked", () => {
     .map((entry) => entry.name)
     .sort();
 
-  assert.ok(migrations.length >= 1);
+  assert.ok(migrations.length >= 2);
   assert.equal(migrations[0], "20261006062000_initial");
+  assert.equal(migrations[1], "20261006130000_identity_access");
 });
 
 test("initial migration contains core business, ledger, audit and security tables", () => {
@@ -44,4 +45,28 @@ test("initial migration contains core business, ledger, audit and security table
   assert.match(sql, /FinancialLedgerEntry_settlementId_fkey/);
   assert.match(sql, /AuditEvent_actorUserId_fkey/);
   assert.match(sql, /ResearchMatch_researchNeedId_animalCaseId_key/);
+});
+
+
+test("identity lifecycle migration adds external identity and verification controls", () => {
+  const sql = readFileSync(
+    join(
+      migrationRoot,
+      "20261006130000_identity_access",
+      "migration.sql"
+    ),
+    "utf8"
+  );
+
+  for (const table of [
+    "ExternalIdentity",
+    "IdentityAssertionUse",
+    "OrganizationVerification"
+  ]) {
+    assert.match(sql, new RegExp('CREATE TABLE "' + table + '"'));
+  }
+
+  assert.match(sql, /ExternalIdentity_provider_subject_key/);
+  assert.match(sql, /Membership_userId_status_idx/);
+  assert.match(sql, /MIGRATION_GRANDFATHERED/);
 });

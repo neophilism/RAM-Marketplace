@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { demoAuthEnabled } from "@/lib/auth/session";
+import { identityBoundaryConfig } from "@/lib/auth/identity-config";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ const demos = [
 
 export default function SignInPage() {
   const demoEnabled = demoAuthEnabled();
+  const identity = identityBoundaryConfig();
 
   return (
     <section className="page narrow">
@@ -25,39 +26,66 @@ export default function SignInPage() {
           <div className="eyebrow">RAM access</div>
           <h1>Sign in to your workspace</h1>
           <p>
-            RAM's session boundary is active. Production identity-provider credentials are
-            configured at deployment; local development can use isolated demo identities.
+            Production access uses a verified external identity assertion. RAM
+            then revalidates membership and organization status on every protected
+            request.
           </p>
         </div>
       </div>
 
       <div className="detailGrid">
         <article className="panel">
-          <h2>New organization</h2>
-          <p>Create the initial workspace for a farm, research organization, veterinary group or logistics provider.</p>
-          <Link className="primaryButton" href="/onboarding">Start onboarding</Link>
+          <h2>Verified sign in</h2>
+          <p>
+            Use the configured identity provider for both existing accounts and
+            new organization onboarding.
+          </p>
+          {identity.loginUrl ? (
+            <a className="primaryButton" href={identity.loginUrl}>
+              Continue with verified identity
+            </a>
+          ) : (
+            <span className="subtle">
+              No production identity login URL is configured on this deployment.
+            </span>
+          )}
         </article>
 
         <article className="panel">
-          <h2>Existing organization</h2>
+          <h2>New organization</h2>
           <p>
-            External identity-provider sign-in is intentionally deployment-configurable.
-            Returning-user provider buttons will appear here once the deployment provider is connected.
+            After identity verification, RAM collects organization details and
+            creates a pending workspace. Operational access starts only after RAM
+            verifies the organization.
           </p>
+          {identity.loginUrl ? (
+            <a className="secondaryButton" href={identity.loginUrl}>
+              Verify identity & start onboarding
+            </a>
+          ) : (
+            <a className="secondaryButton" href="/onboarding">
+              View onboarding requirements
+            </a>
+          )}
         </article>
       </div>
 
       {demoEnabled && (
         <div className="panel">
           <h2>Development demo identities</h2>
-          <p>These signed sessions are available only in local development or when explicitly enabled.</p>
+          <p>
+            These signed sessions are available only in local development or when
+            explicitly enabled.
+          </p>
           <div className="demoGrid">
             {demos.map((demo) => (
               <form action="/api/session/demo" method="post" key={demo.id} className="demoCard">
                 <input type="hidden" name="actor" value={demo.id} />
                 <strong>{demo.label}</strong>
                 <span>{demo.note}</span>
-                <button className="secondaryButton" type="submit">Enter workspace</button>
+                <button className="secondaryButton" type="submit">
+                  Enter workspace
+                </button>
               </form>
             ))}
           </div>
