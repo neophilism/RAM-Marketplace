@@ -1,12 +1,17 @@
 import Link from "next/link";
+import { getPrototypeAnimals } from "@/lib/server/prototype-store";
 
-const cases = [
+export const dynamic = "force-dynamic";
+
+const seededCases = [
   { id: "RAM-SW-0001847", condition: "Hearing loss", status: "AVAILABLE", action: "2 researcher views" },
   { id: "RAM-SW-0001902", condition: "Chronic dermatitis", status: "VET_REVIEW", action: "Vet visit scheduled" },
   { id: "RAM-SW-0001911", condition: "Mobility impairment", status: "DRAFT", action: "Finish submission" }
 ];
 
 export default function FarmPage() {
+  const cases = [...getPrototypeAnimals(), ...seededCases];
+
   return (
     <section className="page">
       <div className="pageHeader">
@@ -14,6 +19,7 @@ export default function FarmPage() {
         <Link className="primaryButton" href="/farm/new">Report an animal</Link>
       </div>
       <div className="privacyBanner"><strong>Source protection is on.</strong><span>Scientists see RAM animal IDs and approved scientific information—not your farm name, logo, address, or seller profile.</span></div>
+      <div className="prototypeBanner"><strong>Prototype persistence:</strong> new submissions remain available for the lifetime of this server process. PostgreSQL persistence is the next infrastructure step.</div>
       <div className="tableCard">
         <div className="tableRow tableHead"><span>Animal</span><span>Condition</span><span>Status</span><span>Next step</span></div>
         {cases.map((item) => <div className="tableRow" key={item.id}><strong>{item.id}</strong><span>{item.condition}</span><span className="status">{item.status.replaceAll("_", " ")}</span><span>{item.action}</span></div>)}
