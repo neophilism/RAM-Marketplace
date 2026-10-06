@@ -25,7 +25,8 @@ const capabilities: { id: Capability; label: string }[] = [
   { id: "disclosure:supplier_review", label: "Approve farm source disclosures" },
   { id: "transport:assign", label: "Assign cleared orders to logistics providers" },
   { id: "transport:update", label: "Record transport custody and delivery events" },
-  { id: "operations:manage", label: "Manage RAM operations" }
+  { id: "operations:manage", label: "Manage RAM operations" },
+  { id: "admin:manage", label: "Manage organization verification and account lifecycle" }
 ];
 
 function accessMessage(reason: string) {
