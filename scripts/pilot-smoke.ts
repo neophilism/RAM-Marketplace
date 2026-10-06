@@ -10,6 +10,12 @@ export type PilotSmokeResult = {
 
 type FetchLike = typeof fetch;
 
+type PilotSmokeEnvironment = {
+  RAM_PILOT_BASE_URL?: string;
+  RAM_PILOT_ALLOW_INSECURE_LOCAL?: string;
+  RAM_MONITORING_RUN_TOKEN?: string;
+};
+
 function isLoopback(hostname: string) {
   return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "::1";
 }
@@ -74,7 +80,7 @@ async function checkedFetch(
 }
 
 export async function runPilotSmoke(
-  env: NodeJS.ProcessEnv = process.env,
+  env: PilotSmokeEnvironment = process.env,
   fetchImpl: FetchLike = fetch
 ): Promise<PilotSmokeResult> {
   const allowInsecureLocal =
