@@ -1,6 +1,10 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import type { SessionPrincipal } from "@/lib/auth/token";
+import {
+  assertBlindAcquisitionProjection,
+  assertBuyerOrderProjection
+} from "@/lib/commercial-privacy";
 import { requireCapability } from "@/lib/access";
 import { canAdvanceOrder } from "@/lib/order-policy";
 import {
@@ -534,7 +538,8 @@ export async function listBuyerOrders(
     }
   });
 
-  return rows.map((row) => ({
+  return rows.map((row) => {
+    const projected = {
     id: row.id,
     animalCaseId: row.animalCaseId,
     species: row.animalCase.species,
@@ -546,7 +551,10 @@ export async function listBuyerOrders(
     holdExpiresAt: row.holdExpiresAt?.toISOString() ?? null,
     quoteExpiresAt: row.quoteExpiresAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString()
-  }));
+    };
+    assertBuyerOrderProjection(projected as unknown as Record<string, unknown>);
+    return projected;
+  });
 }
 
 export async function getBuyerOrder(
@@ -632,7 +640,7 @@ export async function getBuyerOrder(
   });
   if (!row) throw new Error("Order not found");
 
-  return {
+  const projected = {
     id: row.id,
     animalCaseId: row.animalCaseId,
     species: row.animalCase.species,
@@ -655,6 +663,8 @@ export async function getBuyerOrder(
     clearanceDecision: row.clearance?.decision ?? null,
     clearanceNotes: row.clearance?.notes ?? null
   };
+  assertBuyerOrderProjection(projected as unknown as Record<string, unknown>);
+  return projected;
 }
 
 export async function commitBuyerOrder(
@@ -1012,7 +1022,7 @@ export async function listFinanceOrders(
       (candidate) =>
         candidate.species.toLowerCase() === row.animalCase.species.toLowerCase()
     );
-    return {
+    const projected = {
       id: row.id,
       animalCaseId: row.animalCaseId,
       species: row.animalCase.species,
@@ -1029,6 +1039,8 @@ export async function listFinanceOrders(
           }
         : null
     };
+    assertBlindAcquisitionProjection(projected as unknown as Record<string, unknown>);
+    return projected;
   });
 }
 
