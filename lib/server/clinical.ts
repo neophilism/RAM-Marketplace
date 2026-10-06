@@ -1,5 +1,6 @@
 import "server-only";
 import type { SessionPrincipal } from "@/lib/auth/token";
+import type { Prisma } from "@/generated/prisma/client";
 import { requireCapability } from "@/lib/access";
 import {
   candidateStatusForVeterinaryOutcome,
@@ -265,9 +266,9 @@ async function refreshMatchesForNeed(researchNeedId: string) {
           timingAvailability: match.components.timingAvailability,
           logisticsFit: match.components.logisticsFit,
           priceFit: match.components.priceFit,
-          hardGates: match.hardGates,
-          reviewFlags: match.reviewFlags,
-          reasons: match.reasons
+          hardGates: match.hardGates as unknown as Prisma.InputJsonValue,
+          reviewFlags: match.reviewFlags as Prisma.InputJsonValue,
+          reasons: match.reasons as Prisma.InputJsonValue
         }
       });
     }
@@ -334,9 +335,9 @@ async function refreshMatchesForAnimal(animalCaseId: string) {
           timingAvailability: match.components.timingAvailability,
           logisticsFit: match.components.logisticsFit,
           priceFit: match.components.priceFit,
-          hardGates: match.hardGates,
-          reviewFlags: match.reviewFlags,
-          reasons: match.reasons
+          hardGates: match.hardGates as unknown as Prisma.InputJsonValue,
+          reviewFlags: match.reviewFlags as Prisma.InputJsonValue,
+          reasons: match.reasons as Prisma.InputJsonValue
         }
       });
     }
