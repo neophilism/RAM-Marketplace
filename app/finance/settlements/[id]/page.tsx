@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
 import { getFinancialSettlement } from "@/lib/server/settlements";
+import { paymentGatewayConfig } from "@/lib/payments/gateway";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function SettlementPage({
   const session = await requireSession();
   const { id } = await params;
   const settlement = await getFinancialSettlement(session, id);
+  const gateway = paymentGatewayConfig();
 
   const balancesClear =
     settlement.buyerOutstandingCents === 0 &&
@@ -75,8 +77,89 @@ export default async function SettlementPage({
         </article>
       </div>
 
+      {settlement.settlementStatus === "OPEN" && gateway && (
+        <>
+          <div className="privacyBanner">
+            <strong>Provider execution enabled.</strong>
+            <span>RAM sends signed, idempotent instructions to {gateway.name}. Ledger money movements are appended only after an authenticated success webhook.</span>
+          </div>
+          <div className="detailGrid">
+            <article className="panel">
+              <h2>Collect buyer payment</h2>
+              <p>Initiate a provider collection for some or all of the outstanding buyer receivable.</p>
+              <form className="formStack" action={"/api/finance/settlements/" + settlement.id + "/execute"} method="post">
+                <input type="hidden" name="type" value="BUYER_COLLECTION" />
+                <label><span>Amount (USD) *</span><input name="amountUsd" type="number" min="0.01" step="0.01" max={settlement.buyerOutstandingCents / 100} required /></label>
+                <button className="primaryButton" type="submit" disabled={settlement.buyerOutstandingCents === 0}>Initiate buyer collection</button>
+              </form>
+            </article>
+
+            <article className="panel">
+              <h2>Pay supplier</h2>
+              <p>The provider receives only the independently committed supplier amount. Buyer price and match value remain outside this instruction.</p>
+              <form className="formStack" action={"/api/finance/settlements/" + settlement.id + "/execute"} method="post">
+                <input type="hidden" name="type" value="SUPPLIER_PAYOUT" />
+                <label><span>Amount (USD) *</span><input name="amountUsd" type="number" min="0.01" step="0.01" max={settlement.supplierOutstandingCents / 100} required /></label>
+                <button className="primaryButton" type="submit" disabled={settlement.supplierOutstandingCents === 0}>Initiate supplier payout</button>
+              </form>
+            </article>
+          </div>
+
+          {settlement.orderStatus === "DISPUTED" && settlement.buyerRefundDueCents > 0 ? (
+            <article className="panel">
+              <h2>Refund buyer</h2>
+              <p>Initiate return of cash already collected after a buyer credit has created a refund due.</p>
+              <form className="formStack" action={"/api/finance/settlements/" + settlement.id + "/execute"} method="post">
+                <input type="hidden" name="type" value="BUYER_REFUND" />
+                <label><span>Amount (USD) *</span><input name="amountUsd" type="number" min="0.01" step="0.01" max={settlement.buyerRefundDueCents / 100} required /></label>
+                <button className="primaryButton" type="submit">Initiate buyer refund</button>
+              </form>
+            </article>
+          ) : null}
+        </>
+      )}
+
+      {settlement.paymentExecutions.length > 0 && (
+        <article className="panel">
+          <h2>Provider executions</h2>
+          <div className="tableCard">
+            <div className="tableRow tableHead"><span>Type / amount</span><span>Status</span><span>Provider reference</span><span>Action</span></div>
+            {settlement.paymentExecutions.map((execution) => (
+              <div className="tableRow" key={execution.id}>
+                <div>
+                  <strong>{execution.type.replaceAll("_", " ")}</strong>
+                  <div className="subtle">{money(execution.amountCents)} {execution.currency}</div>
+                </div>
+                <div>
+                  <span className="status">{execution.status.replaceAll("_", " ")}</span>
+                  {execution.failureMessage ? <div className="subtle">{execution.failureMessage}</div> : null}
+                </div>
+                <div>
+                  <strong>{execution.provider ?? execution.gateway ?? "Pending gateway"}</strong>
+                  <div className="subtle">{execution.providerReference ?? execution.idempotencyKey}</div>
+                </div>
+                <div>
+                  {execution.status === "SUBMISSION_UNKNOWN" ? (
+                    <form action={"/api/finance/executions/" + execution.id + "/retry"} method="post">
+                      <button className="secondaryButton" type="submit">Retry same instruction</button>
+                    </form>
+                  ) : (
+                    <span className="subtle">{execution.completedAt ? new Date(execution.completedAt).toLocaleString() : "Awaiting provider event"}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+      )}
+
       {settlement.settlementStatus === "OPEN" && (
-        <div className="detailGrid">
+        <>
+          <div className="privacyBanner">
+            <strong>Manual ledger fallback.</strong>
+            <span>Use manual movement entry only for externally executed or reconciliation-required transactions. Do not duplicate a provider execution that is submitted, processing, or submission-unknown.</span>
+          </div>
+          <div className="detailGrid">
           <article className="panel">
             <h2>Record buyer payment</h2>
             <p>Partial payments are allowed. The ledger prevents recording more than the outstanding receivable.</p>
@@ -100,7 +183,8 @@ export default async function SettlementPage({
               <button className="primaryButton" type="submit" disabled={settlement.supplierOutstandingCents === 0}>Record supplier payout</button>
             </form>
           </article>
-        </div>
+          </div>
+        </>
       )}
 
       {settlement.settlementStatus === "OPEN" && settlement.orderStatus === "DISPUTED" && (

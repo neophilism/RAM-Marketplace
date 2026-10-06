@@ -65,6 +65,22 @@ export interface FinancialSettlementDetail extends FinancialSettlementSummary {
     notes: string | null;
     occurredAt: string;
   }>;
+  paymentExecutions: Array<{
+    id: string;
+    type: string;
+    status: string;
+    amountCents: number;
+    currency: string;
+    gateway: string | null;
+    provider: string | null;
+    providerReference: string | null;
+    idempotencyKey: string;
+    failureCode: string | null;
+    failureMessage: string | null;
+    createdAt: string;
+    submittedAt: string | null;
+    completedAt: string | null;
+  }>;
 }
 
 function movementEntries(
@@ -197,7 +213,8 @@ export async function getFinancialSettlement(
         externalReference: entry.externalReference ?? null,
         notes: entry.notes ?? null,
         occurredAt: entry.occurredAt
-      }))
+      })),
+      paymentExecutions: []
     };
   }
 
@@ -214,7 +231,8 @@ export async function getFinancialSettlement(
           }
         }
       },
-      entries: { orderBy: { occurredAt: "asc" } }
+      entries: { orderBy: { occurredAt: "asc" } },
+      paymentExecutions: { orderBy: { createdAt: "desc" } }
     }
   });
   if (!row) throw new Error("Financial settlement not found");
@@ -255,6 +273,22 @@ export async function getFinancialSettlement(
       externalReference: entry.externalReference,
       notes: entry.notes,
       occurredAt: entry.occurredAt.toISOString()
+    })),
+    paymentExecutions: row.paymentExecutions.map((execution) => ({
+      id: execution.id,
+      type: execution.type,
+      status: execution.status,
+      amountCents: execution.amountCents,
+      currency: execution.currency,
+      gateway: execution.gateway,
+      provider: execution.provider,
+      providerReference: execution.providerReference,
+      idempotencyKey: execution.idempotencyKey,
+      failureCode: execution.failureCode,
+      failureMessage: execution.failureMessage,
+      createdAt: execution.createdAt.toISOString(),
+      submittedAt: execution.submittedAt?.toISOString() ?? null,
+      completedAt: execution.completedAt?.toISOString() ?? null
     }))
   };
 }
@@ -289,7 +323,15 @@ export async function recordFinancialMovement(
     const settlement = await tx.financialSettlement.findUnique({
       where: { id: input.settlementId },
       include: {
-        entries: { select: { type: true, amountCents: true } }
+        entries: { select: { type: true, amountCents: true } },
+        paymentExecutions: {
+          where: {
+            status: {
+              in: ["CREATED", "SUBMITTED", "SUBMISSION_UNKNOWN", "PROCESSING"]
+            }
+          },
+          select: { type: true }
+        }
       }
     });
     if (!settlement) throw new Error("Financial settlement not found");
@@ -301,6 +343,27 @@ export async function recordFinancialMovement(
       settlement,
       movementEntries(settlement.entries)
     );
+
+    const executionType =
+      input.movementType === "BUYER_PAYMENT"
+        ? "BUYER_COLLECTION"
+        : input.movementType === "SUPPLIER_PAYOUT"
+          ? "SUPPLIER_PAYOUT"
+          : input.movementType === "BUYER_REFUND"
+            ? "BUYER_REFUND"
+            : null;
+
+    if (
+      executionType &&
+      settlement.paymentExecutions.some(
+        (execution) => execution.type === executionType
+      )
+    ) {
+      throw new Error(
+        "Manual financial movement is blocked while a provider execution of the same type is unresolved"
+      );
+    }
+
     assertMovementWithinOutstanding(input.movementType, amountCents, balances);
 
     const entry = await tx.financialLedgerEntry.create({

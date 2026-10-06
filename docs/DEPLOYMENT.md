@@ -11,6 +11,10 @@ RAM fails closed toward PostgreSQL in production. A deployment should set:
 - `RAM_IDENTITY_ALLOWED_PROVIDERS` — comma-separated exact provider identifiers accepted in signed assertions.
 - `RAM_IDENTITY_LOGIN_URL` — HTTPS entry point for the upstream identity provider/gateway.
 - `RAM_IDENTITY_REQUIRE_MFA=true`.
+- `RAM_PAYMENT_GATEWAY_NAME` — exact configured payment gateway identifier.
+- `RAM_PAYMENT_GATEWAY_URL` — HTTPS gateway base URL.
+- `RAM_PAYMENT_GATEWAY_SECRET` — long random payment signing secret distinct from session/identity secrets.
+- `RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL=false`.
 - `RAM_PUBLIC_ONBOARDING_ENABLED=false`.
 - `RAM_DEMO_AUTH_ENABLED=false`.
 - `RAM_MAX_MUTATION_BYTES=1048576` unless a different reviewed application limit is required.
@@ -61,6 +65,18 @@ For PostgreSQL-backed requests, RAM then re-checks durable membership and organi
 
 Local development can use environment-gated demo identities. Production demo auth is off unless explicitly enabled. See `docs/IDENTITY.md`.
 
+## Payment execution boundary
+
+RAM finance may initiate buyer collections, supplier payouts and buyer refunds through the configured provider-neutral gateway.
+
+Outbound instructions and inbound webhooks are HMAC-signed. Provider success callbacks append the existing ledger movement; submission alone never counts as payment.
+
+Network/5xx ambiguity is stored as `SUBMISSION_UNKNOWN` and retried with the same idempotency key rather than creating a second instruction.
+
+Production requires HTTPS. The explicit insecure loopback override exists only for CI and blocks pilot readiness when enabled.
+
+See `docs/PAYMENTS.md`.
+
 ## Request security
 
 Unsafe `/api/*` requests pass explicit same-origin validation in addition to `SameSite=Strict` cookies. Cross-site Fetch Metadata is rejected, production fails closed when no usable same-origin source is available, and declared request bodies are capped by `RAM_MAX_MUTATION_BYTES`.
@@ -85,7 +101,7 @@ After provisioning PostgreSQL:
 
 ```bash
 cp .env.example .env
-# edit DATABASE_URL, AUTH_SECRET and RAM_IDENTITY_* configuration
+# edit DATABASE_URL, AUTH_SECRET, RAM_IDENTITY_* and RAM_PAYMENT_GATEWAY_* configuration
 npm install
 npm run prisma:validate
 npm run db:migrate:deploy
