@@ -22,6 +22,7 @@
     "test": "tsx --test tests/*.test.ts",
     "e2e:prototype": "node scripts/e2e-prototype.mjs",
     "e2e:live": "node scripts/e2e-prototype.mjs",
+    "e2e:identity": "tsx scripts/identity-lifecycle-e2e.ts",
     "pilot:check": "tsx scripts/pilot-readiness.ts",
     "check": "npm run prisma:validate && npm test && npm run typecheck && npm run build"
   },
