@@ -99,9 +99,11 @@ Users can hold one or more organization memberships rather than a single global 
 
 Authorization will combine role permissions with organization, facility, order relationship and assignment attributes.
 
-## Current transactional prototype
+## Current transactional implementation
 
-Phase 2 includes validated farm submissions and research requests, a veterinary verification workspace, dynamic dashboards and a server-side prototype store. The store exists only to exercise the end-to-end UI before deployment infrastructure is provisioned; PostgreSQL is the durable system of record defined by this schema.
+The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment and compliance clearance. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
+
+The supplier-acquisition decision surface is intentionally blind to buyer identity and buyer price. Buyer-facing order projections are independently guarded from supplier economics and source identity. See `docs/TRANSACTIONS.md`.
 
 ## Implementation order
 
