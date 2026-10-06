@@ -15,6 +15,12 @@ RAM fails closed toward PostgreSQL in production. A deployment should set:
 - `RAM_PAYMENT_GATEWAY_URL` — HTTPS gateway base URL.
 - `RAM_PAYMENT_GATEWAY_SECRET` — long random payment signing secret distinct from session/identity secrets.
 - `RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL=false`.
+- `RAM_MONITORING_ENABLED=true`.
+- `RAM_MONITORING_RUN_TOKEN` — strong scheduler bearer token distinct from all other RAM secrets.
+- `RAM_MONITORING_ALERT_WEBHOOK_URL` — HTTPS external alert receiver.
+- `RAM_MONITORING_ALERT_WEBHOOK_SECRET` — independent HMAC signing secret for alert delivery.
+- `RAM_MONITORING_ALLOW_INSECURE_LOCAL=false`.
+- reviewed `RAM_MONITORING_*` stale-condition thresholds and heartbeat age.
 - `RAM_PUBLIC_ONBOARDING_ENABLED=false`.
 - `RAM_DEMO_AUTH_ENABLED=false`.
 - `RAM_MAX_MUTATION_BYTES=1048576` unless a different reviewed application limit is required.
@@ -77,6 +83,18 @@ Production requires HTTPS. The explicit insecure loopback override exists only f
 
 See `docs/PAYMENTS.md`.
 
+## Operational monitoring boundary
+
+Production monitoring is an explicit deployment component rather than an in-process hidden worker.
+
+The deployment scheduler POSTs to `/api/monitoring/run` with the strong independent `RAM_MONITORING_RUN_TOKEN`. RAM evaluates durable PostgreSQL state, persists deduplicated incidents, and sends HMAC-signed incident alerts to `RAM_MONITORING_ALERT_WEBHOOK_URL`.
+
+`GET /api/health/live` is the process liveness probe. `GET /api/health/ready` performs a production PostgreSQL readiness check without exposing internal failure details.
+
+The default ambiguous-payment threshold is 10 minutes, so a 5-minute scheduler cadence is appropriate unless the reviewed thresholds are changed.
+
+See `docs/MONITORING.md`.
+
 ## Request security
 
 Unsafe `/api/*` requests pass explicit same-origin validation in addition to `SameSite=Strict` cookies. Cross-site Fetch Metadata is rejected, production fails closed when no usable same-origin source is available, and declared request bodies are capped by `RAM_MAX_MUTATION_BYTES`.
@@ -101,7 +119,7 @@ After provisioning PostgreSQL:
 
 ```bash
 cp .env.example .env
-# edit DATABASE_URL, AUTH_SECRET, RAM_IDENTITY_* and RAM_PAYMENT_GATEWAY_* configuration
+# edit DATABASE_URL, AUTH_SECRET, RAM_IDENTITY_*, RAM_PAYMENT_GATEWAY_* and RAM_MONITORING_* configuration
 npm install
 npm run prisma:validate
 npm run db:migrate:deploy
@@ -118,7 +136,7 @@ Also configure TLS, edge/WAF throttling, trusted forwarding headers, PostgreSQL 
 
 Run `npm run pilot:check` against the intended production environment. A non-zero exit code means an automatically verifiable launch requirement is blocked.
 
-RAM also exposes a super-admin `/ops/pilot` dashboard with the same automatic checks plus manual deployment gates.
+RAM also exposes a super-admin `/ops/pilot` launch-control dashboard. Manual gates are persisted records with accountable RAM owners, evidence, verifier identity, timestamps and optional review expiry. A recent successful monitoring heartbeat is an automatic launch gate.
 
 CI runs the live workflow twice: once against isolated prototype storage and again against PostgreSQL created from the committed migration history. The PostgreSQL job also exercises the signed external identity boundary, assertion replay prevention, verified onboarding, immediate durable-session revocation/reactivation, schema drift and populated dump/restore. These checks do not replace validation of the actual upstream identity provider/gateway, production-provider backup/PITR drills or payment-provider validation.
 

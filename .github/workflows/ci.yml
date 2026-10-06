@@ -66,6 +66,17 @@ jobs:
       RAM_PAYMENT_GATEWAY_URL: http://127.0.0.1:4119
       RAM_PAYMENT_GATEWAY_SECRET: ram-ci-payment-gateway-secret-value-2026
       RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL: "true"
+      RAM_MONITORING_ENABLED: "true"
+      RAM_MONITORING_RUN_TOKEN: ram-ci-monitoring-run-token-value-2026
+      RAM_MONITORING_ALERT_WEBHOOK_URL: http://127.0.0.1:4120/alerts
+      RAM_MONITORING_ALERT_WEBHOOK_SECRET: ram-ci-monitoring-alert-secret-value-2026
+      RAM_MONITORING_ALLOW_INSECURE_LOCAL: "true"
+      RAM_MONITORING_PAYMENT_UNKNOWN_MINUTES: "1"
+      RAM_MONITORING_PAYMENT_PROCESSING_MINUTES: "5"
+      RAM_MONITORING_DISPUTE_HOURS: "1"
+      RAM_MONITORING_PICKUP_HOURS: "1"
+      RAM_MONITORING_ORG_VERIFICATION_HOURS: "1"
+      RAM_MONITORING_MAX_RUN_AGE_MINUTES: "15"
       RAM_MAX_MUTATION_BYTES: "1048576"
     steps:
       - uses: actions/checkout@v4
@@ -83,18 +94,21 @@ jobs:
         run: npm run db:seed:e2e
       - name: Build production application
         run: npm run build
-      - name: Live PostgreSQL transaction, identity and payment lifecycle E2E
+      - name: Live PostgreSQL transaction, identity, payment and monitoring lifecycle E2E
         env:
           RAM_E2E_BASE_URL: http://127.0.0.1:3118
         run: |
           npm run payments:fake-gateway > /tmp/ram-payment-gateway.log 2>&1 &
           gateway_pid=$!
+          npm run monitoring:fake-alert > /tmp/ram-monitoring-alert.log 2>&1 &
+          alert_pid=$!
           npm run start -- --hostname 127.0.0.1 --port 3118 > /tmp/ram-postgres-e2e.log 2>&1 &
           server_pid=$!
-          trap 'cat /tmp/ram-postgres-e2e.log; cat /tmp/ram-payment-gateway.log; kill "$server_pid" "$gateway_pid" 2>/dev/null || true' EXIT
+          trap 'cat /tmp/ram-postgres-e2e.log; cat /tmp/ram-payment-gateway.log; cat /tmp/ram-monitoring-alert.log; kill "$server_pid" "$gateway_pid" "$alert_pid" 2>/dev/null || true' EXIT
           npm run e2e:live
           npm run e2e:identity
           npm run e2e:payments
+          npm run e2e:monitoring
       - name: Verify PostgreSQL dump and restore
         env:
           PGPASSWORD: postgres
@@ -103,7 +117,7 @@ jobs:
           createdb -h 127.0.0.1 -U postgres ram_restore
           pg_restore -h 127.0.0.1 -U postgres -d ram_restore --no-owner --no-acl /tmp/ram-marketplace.dump
 
-          for table in Organization User Membership ExternalIdentity IdentityAssertionUse OrganizationVerification OrganizationPaymentProfile AnimalCase ResearchNeed Order FinancialSettlement FinancialLedgerEntry PaymentExecution PaymentWebhookReceipt AuditEvent; do
+          for table in Organization User Membership ExternalIdentity IdentityAssertionUse OrganizationVerification OrganizationPaymentProfile AnimalCase ResearchNeed Order FinancialSettlement FinancialLedgerEntry PaymentExecution PaymentWebhookReceipt OperationalIncident MonitoringRun AlertDelivery PilotGateVerification AuditEvent; do
             source_count=$(psql -h 127.0.0.1 -U postgres -d ram_marketplace -Atc "SELECT count(*) FROM \"$table\";")
             restore_count=$(psql -h 127.0.0.1 -U postgres -d ram_restore -Atc "SELECT count(*) FROM \"$table\";")
             test "$source_count" = "$restore_count"

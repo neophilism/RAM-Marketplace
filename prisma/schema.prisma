@@ -215,6 +215,34 @@ enum DisputeResolutionType {
   REFUND
 }
 
+enum OperationalIncidentSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum OperationalIncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum MonitoringRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum AlertDeliveryStatus {
+  SENT
+  FAILED
+}
+
+enum PilotGateVerificationStatus {
+  PENDING
+  VERIFIED
+}
+
 model Organization {
   id            String             @id @default(cuid())
   name          String
@@ -259,6 +287,10 @@ model User {
   organizationVerificationsReviewed OrganizationVerification[] @relation("OrganizationVerificationReviewer")
   requestedPaymentExecutions PaymentExecution[] @relation("PaymentExecutionRequester")
   verifiedPaymentProfiles OrganizationPaymentProfile[] @relation("PaymentProfileVerifier")
+  acknowledgedIncidents OperationalIncident[] @relation("IncidentAcknowledgedBy")
+  resolvedIncidents OperationalIncident[] @relation("IncidentResolvedBy")
+  ownedPilotGates PilotGateVerification[] @relation("PilotGateOwner")
+  verifiedPilotGates PilotGateVerification[] @relation("PilotGateVerifier")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -824,6 +856,87 @@ model PaymentWebhookReceipt {
 
   @@unique([gateway, eventId])
   @@index([executionId, receivedAt])
+}
+
+model OperationalIncident {
+  id                   String                      @id @default(cuid())
+  fingerprint          String                      @unique
+  code                 String
+  severity             OperationalIncidentSeverity
+  status               OperationalIncidentStatus   @default(OPEN)
+  title                String
+  summary              String
+  entityType           String?
+  entityId             String?
+  firstDetectedAt      DateTime                    @default(now())
+  lastDetectedAt       DateTime                    @default(now())
+  occurrenceCount      Int                         @default(1)
+  acknowledgedByUserId String?
+  acknowledgedAt       DateTime?
+  resolvedByUserId     String?
+  resolvedAt           DateTime?
+  resolutionNotes      String?
+  metadata             Json?
+  acknowledgedBy       User?                       @relation("IncidentAcknowledgedBy", fields: [acknowledgedByUserId], references: [id])
+  resolvedBy           User?                       @relation("IncidentResolvedBy", fields: [resolvedByUserId], references: [id])
+  alertDeliveries      AlertDelivery[]
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  @@index([status, severity, lastDetectedAt])
+  @@index([code, status])
+  @@index([entityType, entityId])
+}
+
+model MonitoringRun {
+  id               String              @id @default(cuid())
+  trigger          String
+  status           MonitoringRunStatus @default(RUNNING)
+  startedAt        DateTime            @default(now())
+  completedAt      DateTime?
+  signalsEvaluated Int                 @default(0)
+  incidentsOpened  Int                 @default(0)
+  incidentsUpdated Int                 @default(0)
+  alertAttempts    Int                 @default(0)
+  errorMessage     String?
+  createdAt        DateTime            @default(now())
+
+  @@index([status, startedAt])
+  @@index([completedAt])
+}
+
+model AlertDelivery {
+  id           String              @id @default(cuid())
+  incidentId   String
+  status       AlertDeliveryStatus
+  endpointHash String
+  payloadHash  String
+  responseCode Int?
+  errorMessage String?
+  attemptedAt  DateTime            @default(now())
+  incident     OperationalIncident @relation(fields: [incidentId], references: [id])
+
+  @@index([incidentId, attemptedAt])
+  @@index([status, attemptedAt])
+}
+
+model PilotGateVerification {
+  id               String                       @id @default(cuid())
+  gateKey          String                       @unique
+  status           PilotGateVerificationStatus  @default(PENDING)
+  ownerUserId      String?
+  evidenceSummary  String?
+  verifiedByUserId String?
+  verifiedAt       DateTime?
+  reviewDueAt      DateTime?
+  notes            String?
+  owner            User?                        @relation("PilotGateOwner", fields: [ownerUserId], references: [id])
+  verifiedBy       User?                        @relation("PilotGateVerifier", fields: [verifiedByUserId], references: [id])
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  @@index([status, reviewDueAt])
+  @@index([ownerUserId, status])
 }
 
 model SecurityRateLimitBucket {

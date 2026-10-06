@@ -55,7 +55,10 @@ The application now includes:
 - PostgreSQL-backed full E2E plus dump/restore recovery verification;
 - provider-neutral signed payment execution for buyer collections, supplier payouts and refunds;
 - webhook idempotency, ambiguous-submission retry and manual/provider double-post protection;
-- privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session and onboarding tests.
+- durable operational monitoring runs, deduplicated incidents and signed alert delivery;
+- liveness/readiness probes and super-admin incident lifecycle controls;
+- accountable pilot gates with owner, evidence, verifier and optional expiry;
+- privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session, onboarding and monitoring tests.
 
 ## Run locally
 
@@ -76,7 +79,7 @@ npm run db:push
 npm run dev
 ```
 
-See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, `docs/DISPUTES.md` for rejected-receipt exceptions, `docs/SECURITY.md` for the application security contract, `docs/IDENTITY.md` for production identity/onboarding/access control, `docs/PILOT.md` for end-to-end and readiness checks, `docs/DATABASE.md` for migrations/backup/recovery, `docs/PAYMENTS.md` for money-movement execution, and `docs/DEPLOYMENT.md` for environment/deployment details.
+See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, `docs/DISPUTES.md` for rejected-receipt exceptions, `docs/SECURITY.md` for the application security contract, `docs/IDENTITY.md` for production identity/onboarding/access control, `docs/PILOT.md` for end-to-end and readiness checks, `docs/DATABASE.md` for migrations/backup/recovery, `docs/PAYMENTS.md` for money-movement execution, `docs/MONITORING.md` for monitoring/incident response, and `docs/DEPLOYMENT.md` for environment/deployment details.
 
 ## Verification
 

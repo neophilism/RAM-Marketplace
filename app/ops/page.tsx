@@ -31,6 +31,7 @@ export default async function OpsPage() {
         {can(session.role, "audit:read") ? (
           <>
             <Link className="secondaryButton" href="/ops/audit">Global audit explorer</Link>
+            <Link className="secondaryButton" href="/ops/monitoring">Monitoring & incidents</Link>
             <Link className="secondaryButton" href="/ops/pilot">Pilot readiness</Link>
             <Link className="secondaryButton" href="/ops/access">Identity & access</Link>
           </>
