@@ -12,7 +12,11 @@ export const animalSubmissionSchema = z.object({
   firstObservedDate: z.string().optional(),
   existingDiagnosis: z.string().max(500).optional(),
   currentTreatment: z.string().max(2000).optional(),
+  cullDecisionDate: z.string().min(1),
+  plannedCullAt: z.string().min(1),
+  cullReason: z.string().min(5).max(1200),
   welfareUrgency: z.enum(["ROUTINE", "SOON", "URGENT"]),
+  independentCullAttestation: z.literal(true),
   ownerAttestation: z.literal(true)
 });
 
