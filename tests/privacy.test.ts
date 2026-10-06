@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { MARKETPLACE_FORBIDDEN_KEYS, assertAnonymousMarketplaceRecord, toMarketplaceListing } from "../lib/marketplace-projection";
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  MARKETPLACE_FORBIDDEN_KEYS,
+  assertAnonymousMarketplaceRecord,
+  toMarketplaceListing
+} from "../lib/marketplace-projection";
 
 const restricted = {
   publicId: "RAM-SW-0001",
@@ -27,16 +32,19 @@ const restricted = {
   privateNotes: "Never disclose this."
 };
 
-describe("marketplace privacy projection", () => {
-  it("never exposes restricted source fields", () => {
-    const listing = toMarketplaceListing(restricted);
-    for (const key of MARKETPLACE_FORBIDDEN_KEYS) {
-      expect(listing).not.toHaveProperty(key);
-    }
-    expect(() => assertAnonymousMarketplaceRecord(listing as unknown as Record<string, unknown>)).not.toThrow();
-  });
+test("marketplace projection never exposes restricted source fields", () => {
+  const listing = toMarketplaceListing(restricted);
+  for (const key of MARKETPLACE_FORBIDDEN_KEYS) {
+    assert.equal(Object.prototype.hasOwnProperty.call(listing, key), false);
+  }
+  assert.doesNotThrow(() =>
+    assertAnonymousMarketplaceRecord(listing as unknown as Record<string, unknown>)
+  );
+});
 
-  it("fails closed if a forbidden field appears", () => {
-    expect(() => assertAnonymousMarketplaceRecord({ id: "RAM-1", farmLegalName: "Leak" })).toThrow(/privacy violation/i);
-  });
+test("marketplace privacy check fails closed if a forbidden field appears", () => {
+  assert.throws(
+    () => assertAnonymousMarketplaceRecord({ id: "RAM-1", farmLegalName: "Leak" }),
+    /privacy violation/i
+  );
 });
