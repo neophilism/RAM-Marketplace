@@ -18,6 +18,18 @@ enum OrganizationType {
   RAM
 }
 
+enum UserRole {
+  FARM_ADMIN
+  FARM_STAFF
+  RESEARCH_ADMIN
+  RESEARCHER
+  VETERINARIAN
+  RAM_OPERATIONS
+  RAM_SCIENTIFIC
+  RAM_COMPLIANCE
+  RAM_ADMIN
+}
+
 enum AnimalCaseStatus {
   DRAFT
   SUBMITTED
@@ -35,6 +47,27 @@ enum AnimalCaseStatus {
   CLOSED
 }
 
+enum ResearchNeedStatus {
+  DRAFT
+  SUBMITTED
+  VERIFIED
+  ACTIVE
+  MATCH_REVIEW
+  SELECTED
+  INSTITUTIONAL_CLEARANCE
+  ORDERED
+  IN_STUDY
+  COMPLETED
+  CLOSED
+}
+
+enum ProtocolStatus {
+  NOT_STARTED
+  DRAFT
+  SUBMITTED
+  APPROVED
+}
+
 enum DisclosureTier {
   PUBLIC_ANONYMIZED
   REQUESTABLE
@@ -43,52 +76,87 @@ enum DisclosureTier {
   RAM_INTERNAL_ONLY
 }
 
+enum DisclosureRequestStatus {
+  PENDING_RAM_REVIEW
+  PENDING_FARM_APPROVAL
+  APPROVED
+  DENIED
+  RELEASED
+  CLOSED
+}
+
+enum VeterinaryReviewOutcome {
+  PENDING
+  NEEDS_DIAGNOSTICS
+  ELIGIBLE
+  INELIGIBLE
+  WELFARE_HOLD
+}
+
 model Organization {
-  id        String           @id @default(cuid())
-  name      String
-  type      OrganizationType
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  farms     Farm[]
-  users     User[]
+  id            String         @id @default(cuid())
+  name          String
+  type          OrganizationType
+  memberships   Membership[]
+  farmSites     FarmSite[]
+  researchNeeds ResearchNeed[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model User {
-  id             String       @id @default(cuid())
-  email          String       @unique
-  name           String
-  organizationId String
-  role           String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  name               String
+  memberships        Membership[]
+  createdNeeds       ResearchNeed[]      @relation("ResearchNeedCreator")
+  veterinaryReviews  VeterinaryReview[]  @relation("VetReviewer")
+  disclosureRequests DisclosureRequest[] @relation("DisclosureRequester")
+  auditEvents        AuditEvent[]        @relation("AuditActor")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
-model Farm {
+model Membership {
   id             String       @id @default(cuid())
+  userId         String
   organizationId String
-  exactAddress   String
-  regionLabel    String
+  role           UserRole
+  user           User         @relation(fields: [userId], references: [id])
   organization   Organization @relation(fields: [organizationId], references: [id])
-  animals        AnimalCase[]
-  permissions    FarmDisclosurePolicy?
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId, role])
+  @@index([organizationId, role])
+}
+
+model FarmSite {
+  id             String                @id @default(cuid())
+  organizationId String
+  internalLabel  String
+  regionLabel    String
+  organization   Organization          @relation(fields: [organizationId], references: [id])
+  sourceRecords  AnimalSourceRecord[]
+  permissions    FarmDisclosurePolicy?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([organizationId])
 }
 
 model FarmDisclosurePolicy {
-  id                        String  @id @default(cuid())
-  farmId                    String  @unique
-  shareGeneralHusbandry     Boolean @default(true)
-  shareCountyAfterNda       Boolean @default(false)
-  shareIdentityPrePurchase  Boolean @default(false)
-  shareIdentityPostPurchase Boolean @default(true)
-  farm                      Farm    @relation(fields: [farmId], references: [id])
+  id                        String   @id @default(cuid())
+  farmSiteId                String   @unique
+  shareGeneralHusbandry     Boolean  @default(true)
+  shareCountyAfterNda       Boolean  @default(false)
+  shareIdentityPrePurchase  Boolean  @default(false)
+  shareIdentityPostPurchase Boolean  @default(true)
+  farmSite                  FarmSite @relation(fields: [farmSiteId], references: [id])
+  updatedAt                 DateTime @updatedAt
 }
 
 model AnimalCase {
-  id                   String              @id
-  farmId               String
+  publicId             String              @id
   species              String
   breed                String?
   sex                  String?
@@ -99,28 +167,117 @@ model AnimalCase {
   diagnosticConfidence String?
   regionLabel          String
   publicSummary        String
+  phenotype            Json?
+  availabilityText     String?
   sourceDisclosure     DisclosureTier      @default(PUBLIC_ANONYMIZED)
   status               AnimalCaseStatus    @default(DRAFT)
   listPriceCents       Int?
-  farm                 Farm                @relation(fields: [farmId], references: [id])
+  transportReady       Boolean             @default(false)
+  sourceRecord         AnimalSourceRecord?
+  veterinaryReviews    VeterinaryReview[]
   disclosureRequests   DisclosureRequest[]
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
   @@index([species, condition, status])
-  @@index([farmId])
+  @@index([status, regionLabel])
+}
+
+model AnimalSourceRecord {
+  id               String     @id @default(cuid())
+  animalCaseId     String     @unique
+  farmSiteId       String
+  exactAddress     String
+  legalOwnerName   String
+  ownerContactName String
+  ownerContactEmail String
+  localVetName     String?
+  localVetContact  String?
+  privateHistory   Json?
+  privateNotes     String?
+  animalCase       AnimalCase @relation(fields: [animalCaseId], references: [publicId])
+  farmSite         FarmSite   @relation(fields: [farmSiteId], references: [id])
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([farmSiteId])
+}
+
+model VeterinaryReview {
+  id             String                    @id @default(cuid())
+  animalCaseId   String
+  reviewerUserId String
+  outcome        VeterinaryReviewOutcome   @default(PENDING)
+  diagnosis      String?
+  welfareNotes   String?
+  diagnosticPlan String?
+  reviewedAt     DateTime?
+  animalCase     AnimalCase                @relation(fields: [animalCaseId], references: [publicId])
+  reviewer       User                      @relation("VetReviewer", fields: [reviewerUserId], references: [id])
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  @@index([animalCaseId, outcome])
+}
+
+model ResearchNeed {
+  id                      String             @id @default(cuid())
+  organizationId          String
+  createdByUserId         String
+  title                   String
+  condition               String
+  species                 String?
+  minAgeMonths            Int?
+  maxAgeMonths            Int?
+  sex                     String?
+  diseaseStage            String?
+  requiredPhenotype       String
+  exclusionCriteria       String?
+  acceptableComorbidities String?
+  requiredDiagnostics     String?
+  procedures              String?
+  quantity                Int                @default(1)
+  timeline                String
+  budgetCents             Int?
+  protocolStatus          ProtocolStatus
+  scientificRationale     String
+  status                  ResearchNeedStatus @default(DRAFT)
+  organization            Organization       @relation(fields: [organizationId], references: [id])
+  createdBy               User               @relation("ResearchNeedCreator", fields: [createdByUserId], references: [id])
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  @@index([organizationId, status])
+  @@index([condition, species, status])
 }
 
 model DisclosureRequest {
-  id               String     @id @default(cuid())
+  id               String                  @id @default(cuid())
   animalCaseId     String
   requesterUserId  String
   requestedFields  Json
   scientificReason String
-  status           String
+  status           DisclosureRequestStatus @default(PENDING_RAM_REVIEW)
   farmApproved     Boolean?
-  reviewedByRam    Boolean    @default(false)
-  animalCase       AnimalCase @relation(fields: [animalCaseId], references: [id])
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  reviewedByRam    Boolean                 @default(false)
+  releasedAt       DateTime?
+  animalCase       AnimalCase              @relation(fields: [animalCaseId], references: [publicId])
+  requester        User                    @relation("DisclosureRequester", fields: [requesterUserId], references: [id])
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@index([animalCaseId, status])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  actor       User?    @relation("AuditActor", fields: [actorUserId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
 }
