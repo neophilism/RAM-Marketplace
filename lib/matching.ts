@@ -96,6 +96,13 @@ function boundedScore(weight: number, ratio: number) {
   return Math.max(0, Math.min(weight, Math.round(weight * ratio)));
 }
 
+function criteriaItems(value: string | null | undefined) {
+  return (value ?? "")
+    .split(/\n|;|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function parseDays(value: string | null | undefined): number | null {
   if (!value) return null;
   const match = value.toLowerCase().match(/(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months)/);
@@ -280,13 +287,49 @@ export function scoreMatch(animal: MatchAnimal, need: MatchNeed): ExplainableMat
   const comorbidityText = animal.comorbidities.join(" ");
   let comorbidityFit = MATCH_WEIGHTS.comorbidityFit;
   if (need.exclusionCriteria?.trim()) {
-    const exclusionOverlap = coverage(need.exclusionCriteria, comorbidityText);
-    comorbidityFit = boundedScore(MATCH_WEIGHTS.comorbidityFit, 1 - exclusionOverlap);
-    if (exclusionOverlap > 0) {
-      reviewFlags.push("Potential overlap with exclusion criteria.");
-      reasons.push("Comorbidity score reduced because candidate text overlaps exclusion criteria.");
+    const exclusionItems = criteriaItems(need.exclusionCriteria);
+    const overlaps = exclusionItems.map((item) => ({
+      item,
+      ratio: coverage(item, comorbidityText)
+    }));
+    const explicitExclusions = overlaps.filter((item) => item.ratio >= 0.6);
+    const ambiguousExclusions = overlaps.filter(
+      (item) => item.ratio > 0 && item.ratio < 0.6
+    );
+
+    if (explicitExclusions.length > 0) {
+      gates.push({
+        gate: "exclusion_criteria",
+        state: "FAIL",
+        reason:
+          "Candidate comorbidities match an explicit exclusion criterion: " +
+          explicitExclusions.map((item) => item.item).join("; ")
+      });
+      comorbidityFit = 0;
+    } else if (ambiguousExclusions.length > 0) {
+      gates.push({
+        gate: "exclusion_criteria",
+        state: "REVIEW",
+        reason: "Candidate comorbidities partially overlap exclusion terminology."
+      });
+      reviewFlags.push("Review possible exclusion-criteria overlap.");
+      comorbidityFit = 5;
+    } else {
+      gates.push({
+        gate: "exclusion_criteria",
+        state: "PASS",
+        reason: "No documented comorbidity matches the stated exclusions."
+      });
     }
-  } else if (need.acceptableComorbidities?.trim()) {
+  } else {
+    gates.push({
+      gate: "exclusion_criteria",
+      state: "PASS",
+      reason: "No exclusion criteria were specified."
+    });
+  }
+
+  if (!need.exclusionCriteria?.trim() && need.acceptableComorbidities?.trim()) {
     const acceptableOverlap = coverage(need.acceptableComorbidities, comorbidityText);
     comorbidityFit = Math.max(
       7,
