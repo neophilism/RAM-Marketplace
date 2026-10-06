@@ -106,6 +106,29 @@ A rejected intake requires at least one failed check plus documented discrepanci
 
 See `docs/LOGISTICS.md` and `docs/RECEIVING.md`.
 
+## Financial ledger and settlement
+
+RAM opens a financial settlement when supplier acquisition is committed. The opening snapshot fixes:
+
+- buyer receivable from the committed quote;
+- supplier payable from the independent acquisition calculation;
+- the schedule and market ceiling used to derive that supplier payable;
+- known direct costs and gross spread.
+
+The supplier payable cannot be changed based on buyer value.
+
+The append-only ledger then records partial or full buyer payments and supplier payouts with external references. A movement that exceeds the remaining receivable/payable is rejected.
+
+Financial settlement may finalize only after institutional acceptance and only when both buyer and supplier outstanding balances are zero:
+
+`ACCEPTED -> SETTLED`
+
+A separate reconciliation attestation and external reference then closes the commercial order:
+
+`SETTLED -> CLOSED`
+
+Commercial close does not imply that the research study is scientifically complete. See `docs/FINANCE.md`.
+
 ## Privacy boundaries
 
 ### Buyer order projection
@@ -140,10 +163,9 @@ The current implementation performs this cleanup lazily on marketplace/order acc
 
 ## Next transaction layers
 
-The remaining post-acceptance phases are:
+The remaining transaction layers are:
 
-- buyer payment and RAM receivable;
-- supplier / carrier / veterinary payouts where applicable;
-- settlement and reconciliation;
 - rejected-receipt disputes, replacements, credits and refunds;
+- provider-integrated payment initiation / webhooks around the existing ledger;
+- carrier / veterinary payables where those services are separately billable;
 - study completion / closure bookkeeping.

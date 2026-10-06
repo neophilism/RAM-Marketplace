@@ -102,7 +102,7 @@ Authorization will combine role permissions with organization, facility, order r
 
 ## Current transactional implementation
 
-The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, compliance clearance, transport assignment, chain-of-custody events, delivery and institutional receiving decisions. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
+The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, acquisition-time financial obligations, compliance clearance, transport assignment, chain-of-custody events, delivery, institutional receiving decisions, payment/payout ledger entries, settlement and financial reconciliation. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
 
 The supplier-acquisition decision surface is intentionally blind to buyer identity and buyer price. Buyer-facing order projections are independently guarded from supplier economics and source identity. See `docs/TRANSACTIONS.md`.
 
@@ -119,9 +119,10 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 9. Reservation/quote/acquisition workflow
 10. Compliance clearance + logistics — implemented through delivery
 11. Receiving acceptance — implemented through `ACCEPTED` / `REJECTED_AT_RECEIPT`
-12. Payment/payout ledger, disputes and settlement
-13. Audit/security hardening
-14. End-to-end tests and pilot deployment
+12. Payment/payout ledger, settlement and reconciliation — implemented
+13. Rejected-receipt disputes, replacements, credits and refunds
+14. Audit/security hardening
+15. End-to-end tests and pilot deployment
 
 ## Test policy
 
