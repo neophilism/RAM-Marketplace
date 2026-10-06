@@ -49,6 +49,8 @@ The application now includes:
 - production browser security headers;
 - live built-application E2E coverage for happy, replacement and refund paths;
 - super-admin pilot-readiness dashboard and CLI;
+- committed PostgreSQL migration history with live migration/drift CI;
+- PostgreSQL-backed full E2E plus dump/restore recovery verification;
 - privacy, RBAC, state-machine, pricing, matching, transaction, cull-provenance, session and onboarding tests.
 
 ## Run locally
@@ -70,7 +72,7 @@ npm run db:push
 npm run dev
 ```
 
-See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, `docs/DISPUTES.md` for rejected-receipt exceptions, `docs/SECURITY.md` for the application security contract, `docs/PILOT.md` for end-to-end and readiness checks, and `docs/DEPLOYMENT.md` for environment/deployment details.
+See `docs/ARCHITECTURE.md` for domain architecture, `docs/MATCHING.md` for the matching contract, `docs/TRANSACTIONS.md` for the commercial/clearance contract, `docs/LOGISTICS.md` for transport custody, `docs/RECEIVING.md` for institutional intake, `docs/FINANCE.md` for the settlement ledger, `docs/DISPUTES.md` for rejected-receipt exceptions, `docs/SECURITY.md` for the application security contract, `docs/PILOT.md` for end-to-end and readiness checks, `docs/DATABASE.md` for migrations/backup/recovery, and `docs/DEPLOYMENT.md` for environment/deployment details.
 
 ## Verification
 

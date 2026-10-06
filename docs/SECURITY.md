@@ -144,4 +144,4 @@ This PR hardens the application boundary but does not replace:
 - database privilege hardening;
 - formal secrets rotation;
 - production monitoring/alerting;
-- reviewed Prisma migration history.
+- production database privilege hardening and provider-level PITR configuration.

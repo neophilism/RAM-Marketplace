@@ -22,9 +22,9 @@ It then launches that built application with:
 - controlled demo identities;
 - explicit same-origin HTTP requests.
 
-The test therefore exercises the built routing/session/middleware/service stack while avoiding production credentials or a disposable external database.
+The test therefore exercises the built routing/session/middleware/service stack while avoiding production credentials.
 
-The E2E suite does **not** claim to test PostgreSQL transaction semantics. Database migration and PostgreSQL deployment verification remain separate pilot gates.
+A second CI job now provisions an empty PostgreSQL 16 service, deploys the committed migration history, seeds the same controlled identities and reruns these workflows against the durable repository implementation. It then dumps the populated database, restores it into a second database and verifies critical business/audit record counts and Prisma migration status.
 
 ## Happy-path scenario
 
@@ -90,7 +90,7 @@ Start the built application in isolated prototype mode on port 3117 with demo au
 RAM_E2E_BASE_URL=http://127.0.0.1:3117 npm run e2e:prototype
 ```
 
-CI performs both operations automatically.
+CI performs both operations automatically for the prototype job. The PostgreSQL integration job uses the same HTTP harness with `RAM_DATA_BACKEND=postgres`.
 
 ## Pilot readiness command
 
@@ -116,7 +116,7 @@ A non-zero exit code means automatically verifiable configuration is blocked.
 The readiness tool deliberately does not pretend these can be proven by environment inspection:
 
 - production identity proofing / MFA or SSO;
-- reviewed database migrations;
+- production application of the reviewed migration history and clean migration status;
 - TLS / WAF / trusted forwarding / hard body limits;
 - encrypted backups and a tested restore;
 - monitoring, alerting, incident ownership and runbooks;
@@ -126,7 +126,7 @@ The super-admin `/ops/pilot` dashboard shows both automatic checks and these man
 
 ## Launch rule
 
-A passing E2E suite means the application workflows integrate correctly in the controlled pilot harness.
+Passing both E2E jobs means the application workflows integrate correctly through both the prototype repository and a freshly migrated PostgreSQL database in the controlled CI harness.
 
 It does **not** by itself authorize real animal transactions.
 

@@ -82,25 +82,25 @@ function recordHeader(response) {
   return value;
 }
 
-function redirectId(response, prefix) {
+function redirectId(response) {
   const location = response.headers.get("location");
   if (!location) fail("Expected redirect Location header");
   const pathname = new URL(location, base).pathname;
   const id = pathname.split("/").filter(Boolean).at(-1);
-  if (!id || !id.startsWith(prefix)) {
-    fail("Expected redirect ID beginning " + prefix + ", got " + pathname);
-  }
+  if (!id) fail("Expected redirect record ID, got " + pathname);
   return id;
 }
 
-function firstLinkedId(html, routePrefix, idPrefix) {
-  const marker = 'href="' + routePrefix + idPrefix;
+function firstLinkedId(html, routePrefix) {
+  const marker = 'href="' + routePrefix;
   const markerIndex = html.indexOf(marker);
-  if (markerIndex < 0) fail("Could not find " + idPrefix + " link under " + routePrefix);
-  const idStart = markerIndex + ('href="' + routePrefix).length;
+  if (markerIndex < 0) fail("Could not find linked record under " + routePrefix);
+  const idStart = markerIndex + marker.length;
   const idEnd = html.indexOf('"', idStart);
   if (idEnd < 0) fail("Malformed linked ID");
-  return html.slice(idStart, idEnd);
+  const id = html.slice(idStart, idEnd);
+  if (!id) fail("Linked record ID is empty");
+  return id;
 }
 
 function assertContains(text, expected, label) {
@@ -185,7 +185,7 @@ async function createDeliveredOrder(label) {
     animalCaseId: animalId,
     researchNeedId: needId
   }, sessions.scientist);
-  const orderId = redirectId(reserveResponse, "ORD-");
+  const orderId = redirectId(reserveResponse);
 
   await postForm("/api/orders/" + orderId + "/commit", {
     receivingFacilityName: "Example Translational Sciences Lab",
@@ -198,7 +198,7 @@ async function createDeliveredOrder(label) {
   await postForm("/api/finance/orders/" + orderId + "/acquire", {}, sessions.finance);
 
   const financeHtml = await page("/finance", sessions.finance);
-  const settlementId = firstLinkedId(financeHtml, "/finance/settlements/", "FS-");
+  const settlementId = firstLinkedId(financeHtml, "/finance/settlements/");
 
   await postForm("/api/finance/settlements/" + settlementId + "/movement", {
     movementType: "SUPPLIER_PAYOUT",
@@ -228,7 +228,7 @@ async function createDeliveredOrder(label) {
   }, sessions.ram);
 
   const transportHtml = await page("/transport", sessions.transporter);
-  const assignmentId = firstLinkedId(transportHtml, "/transport/", "TA-");
+  const assignmentId = firstLinkedId(transportHtml, "/transport/");
   const transportDetail = await page("/transport/" + assignmentId, sessions.transporter);
   assertContains(transportDetail, "Minimum-necessary transport packet", "transport detail");
   if (transportDetail.includes("Anonymous Partner Farm")) fail("Transport packet leaked farm legal identity");
@@ -312,7 +312,7 @@ async function rejectDeliveredOrder(flow, resolutionType) {
   }, sessions.finance);
 
   const disputeHtml = await page("/ops/disputes", sessions.ram);
-  const disputeId = firstLinkedId(disputeHtml, "/ops/disputes/", "OD-");
+  const disputeId = firstLinkedId(disputeHtml, "/ops/disputes/");
 
   await postForm("/api/ops/disputes/" + disputeId + "/resolve", {
     resolutionType,
