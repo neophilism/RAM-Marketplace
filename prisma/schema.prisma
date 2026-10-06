@@ -15,6 +15,12 @@ enum OrganizationStatus {
   CLOSED
 }
 
+enum OrganizationVerificationDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum OrganizationType {
   FARM
   RESEARCH_INSTITUTION
@@ -200,6 +206,7 @@ model Organization {
   researchNeeds ResearchNeed[]
   disclosureRequests DisclosureRequest[] @relation("DisclosureRequesterOrganization")
   transportAssignments TransportAssignment[] @relation("TransportOrganizationAssignments")
+  verification OrganizationVerification?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 }
@@ -225,6 +232,8 @@ model User {
   receivingInspections ReceiptInspection[] @relation("ReceivingInspector")
   openedDisputes     OrderDispute[]      @relation("DisputeOpenedBy")
   resolvedDisputes   OrderDispute[]      @relation("DisputeResolvedBy")
+  externalIdentities ExternalIdentity[]
+  organizationVerificationsReviewed OrganizationVerification[] @relation("OrganizationVerificationReviewer")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -242,6 +251,49 @@ model Membership {
 
   @@unique([userId, organizationId, role])
   @@index([organizationId, status])
+  @@index([userId, status])
+}
+
+model ExternalIdentity {
+  id                  String   @id @default(cuid())
+  userId              String
+  provider            String
+  subject             String
+  emailAtLink         String
+  linkedAt            DateTime @default(now())
+  lastAuthenticatedAt DateTime @default(now())
+  lastAuthContext     Json?
+  user                User     @relation(fields: [userId], references: [id])
+
+  @@unique([provider, subject])
+  @@index([userId])
+}
+
+model IdentityAssertionUse {
+  jti       String   @id
+  provider  String
+  subject   String
+  expiresAt DateTime
+  usedAt    DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model OrganizationVerification {
+  id                String                           @id @default(cuid())
+  organizationId    String                           @unique
+  decision          OrganizationVerificationDecision @default(PENDING)
+  method            String?
+  evidenceSummary   String?
+  notes             String?
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  organization      Organization                     @relation(fields: [organizationId], references: [id])
+  reviewedBy        User?                            @relation("OrganizationVerificationReviewer", fields: [reviewedByUserId], references: [id])
+  createdAt         DateTime                         @default(now())
+  updatedAt         DateTime                         @updatedAt
+
+  @@index([decision, updatedAt])
 }
 
 model Facility {
