@@ -438,10 +438,17 @@ export async function reserveMatchedCandidate(
       }
     });
 
-    await tx.animalCase.update({
-      where: { publicId: input.animalCaseId },
+    const claimed = await tx.animalCase.updateMany({
+      where: {
+        publicId: input.animalCaseId,
+        status: "MATCHABLE"
+      },
       data: { status: "RESERVED" }
     });
+    if (claimed.count !== 1) {
+      throw new Error("Candidate was reserved by another buyer");
+    }
+
     await tx.researchNeed.update({
       where: { id: input.researchNeedId },
       data: { status: "SELECTED" }
