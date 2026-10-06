@@ -24,7 +24,7 @@ It then launches that built application with:
 
 The test therefore exercises the built routing/session/middleware/service stack while avoiding production credentials.
 
-A second CI job now provisions an empty PostgreSQL 16 service, deploys the committed migration history, seeds the same controlled identities and reruns these workflows against the durable repository implementation. The same running application then exercises signed external identity login, assertion replay rejection, membership suspension/reactivation, organization suspension/reactivation, verified new-user onboarding, pending-organization blocking and RAM approval. It then dumps the populated database, restores it into a second database and verifies critical business/audit/identity record counts and Prisma migration status.
+A second CI job now provisions an empty PostgreSQL 16 service, deploys the committed migration history, seeds the same controlled identities and reruns these workflows against the durable repository implementation. The same running application then exercises signed external identity login, assertion replay rejection, membership suspension/reactivation, organization suspension/reactivation, verified new-user onboarding, pending-organization blocking and RAM approval. It also exercises provider-neutral payments, monitoring scheduler authentication, incident deduplication/reopen, signed alert delivery and accountable pilot-gate persistence. It then dumps the populated database, restores it into a second database and verifies critical business/audit/identity/payment/monitoring record counts and Prisma migration status.
 
 ## Happy-path scenario
 
@@ -111,13 +111,17 @@ The command automatically checks:
 - MFA requirement enabled;
 - demo authentication disabled;
 - unverified public onboarding disabled;
-- reviewed mutation-size configuration.
+- reviewed mutation-size configuration;
+- monitoring enabled;
+- strong independent monitoring scheduler token;
+- HTTPS signed monitoring alert receiver;
+- reviewed monitoring thresholds.
 
 A non-zero exit code means automatically verifiable configuration is blocked.
 
 ## Manual pilot gates
 
-The readiness tool deliberately does not pretend these can be proven by environment inspection:
+The readiness tool deliberately does not pretend these can be proven by environment inspection. These gates are now persisted in PostgreSQL and must be verified through `/ops/pilot` with an accountable RAM owner, evidence, verifier identity, and optional review-expiry date:
 
 - validation of the real upstream identity provider/gateway, MFA signal mapping and signing-secret operations;
 - production application of the reviewed migration history and clean migration status;
@@ -126,18 +130,26 @@ The readiness tool deliberately does not pretend these can be proven by environm
 - monitoring, alerting, incident ownership and runbooks;
 - live payment gateway/provider credentials, payout-account ownership, webhook registration, provider failure/reversal semantics and reconciliation procedure.
 
-The super-admin `/ops/pilot` dashboard shows both automatic checks and these manual gates.
+The super-admin `/ops/pilot` dashboard shows automatic checks plus the effective state of these persisted manual gates. Expired verification blocks launch until re-verified.
+
+The dashboard also adds a runtime monitoring-heartbeat check. A configured monitoring system that has not completed a recent successful cycle is not launch-ready.
 
 ## Launch rule
 
-Passing both E2E jobs means the application workflows integrate correctly through both the prototype repository and a freshly migrated PostgreSQL database in the controlled CI harness. PostgreSQL CI also exercises signed payment initiation, authenticated provider success, duplicate-webhook idempotency and provider/ledger double-post protection.
+Passing both E2E jobs means the application workflows integrate correctly through both the prototype repository and a freshly migrated PostgreSQL database in the controlled CI harness. PostgreSQL CI also exercises signed payment initiation, authenticated provider success, duplicate-webhook idempotency, provider/ledger double-post protection, monitoring health probes, scheduler bearer authentication, signed alerts, incident deduplication/reopen and persisted pilot-gate controls.
 
 It does **not** by itself authorize real animal transactions.
 
 Real transactions should begin only after:
 
 - automatic readiness blockers are zero;
-- all manual deployment gates are verified;
+- all manual deployment gates are verified, owned, evidenced and not expired;
+- the monitoring heartbeat is current and signed alert delivery has been operationally validated;
 - PostgreSQL migrations and backup/restore have been tested;
 - identity and payment execution procedures are operational;
 - the pilot organizations, veterinary providers and logistics providers have completed their operational onboarding.
+
+
+## Operational monitoring
+
+Production monitoring behavior, scheduler authentication, alert signing, monitored signals and incident-response procedure are defined in `docs/MONITORING.md`.

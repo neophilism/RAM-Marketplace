@@ -24,7 +24,9 @@
     "e2e:live": "node scripts/e2e-prototype.mjs",
     "e2e:identity": "tsx scripts/identity-lifecycle-e2e.ts",
     "e2e:payments": "tsx scripts/payment-lifecycle-e2e.ts",
+    "e2e:monitoring": "tsx scripts/monitoring-lifecycle-e2e.ts",
     "payments:fake-gateway": "node scripts/fake-payment-gateway.mjs",
+    "monitoring:fake-alert": "node scripts/fake-monitoring-alert-receiver.mjs",
     "pilot:check": "tsx scripts/pilot-readiness.ts",
     "check": "npm run prisma:validate && npm test && npm run typecheck && npm run build"
   },

@@ -67,7 +67,8 @@ export function proxy(request: NextRequest) {
       // It may legitimately be POSTed from an upstream identity gateway.
       if (
         request.nextUrl.pathname !== "/api/session/external" &&
-        request.nextUrl.pathname !== "/api/payments/webhook"
+        request.nextUrl.pathname !== "/api/payments/webhook" &&
+        request.nextUrl.pathname !== "/api/monitoring/run"
       ) {
         assertSameOriginMutation(metadata, {
           production: process.env.NODE_ENV === "production"

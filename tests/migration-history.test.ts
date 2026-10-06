@@ -14,10 +14,11 @@ test("PostgreSQL migration history is committed and provider-locked", () => {
     .map((entry) => entry.name)
     .sort();
 
-  assert.ok(migrations.length >= 3);
+  assert.ok(migrations.length >= 4);
   assert.equal(migrations[0], "20261006062000_initial");
   assert.equal(migrations[1], "20261006130000_identity_access");
   assert.equal(migrations[2], "20261006144500_payment_execution");
+  assert.equal(migrations[3], "20261006155500_operational_monitoring");
 });
 
 test("initial migration contains core business, ledger, audit and security tables", () => {
@@ -101,4 +102,31 @@ test("payment execution migration adds durable execution and webhook idempotency
   assert.match(sql, /PaymentExecution_ledgerEntryId_fkey/);
   assert.match(sql, /requestPayloadHash/);
   assert.match(sql, /SUBMISSION_UNKNOWN/);
+});
+
+
+test("operational monitoring migration persists incidents, alert evidence and pilot gates", () => {
+  const sql = readFileSync(
+    join(
+      migrationRoot,
+      "20261006155500_operational_monitoring",
+      "migration.sql"
+    ),
+    "utf8"
+  );
+
+  for (const table of [
+    "OperationalIncident",
+    "MonitoringRun",
+    "AlertDelivery",
+    "PilotGateVerification"
+  ]) {
+    assert.match(sql, new RegExp('CREATE TABLE "' + table + '"'));
+  }
+
+  assert.match(sql, /OperationalIncident_fingerprint_key/);
+  assert.match(sql, /AlertDelivery_incidentId_fkey/);
+  assert.match(sql, /PilotGateVerification_gateKey_key/);
+  assert.match(sql, /PilotGateVerification_ownerUserId_fkey/);
+  assert.match(sql, /PilotGateVerification_verifiedByUserId_fkey/);
 });

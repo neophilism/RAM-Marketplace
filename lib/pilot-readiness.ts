@@ -1,3 +1,8 @@
+import {
+  monitoringConfig,
+  strongMonitoringSecret
+} from "./monitoring/config";
+
 export type ReadinessStatus = "PASS" | "BLOCK" | "MANUAL";
 
 export interface ReadinessCheck {
@@ -6,6 +11,48 @@ export interface ReadinessCheck {
   status: ReadinessStatus;
   detail: string;
 }
+
+export const PILOT_MANUAL_GATES = [
+  {
+    key: "manual_identity",
+    label: "Identity provider validation",
+    detail:
+      "Validate the upstream provider/gateway claim mapping, MFA signal, signing-secret handling and incident revocation procedure."
+  },
+  {
+    key: "manual_migrations",
+    label: "Reviewed database migrations",
+    detail:
+      "Apply reviewed Prisma migrations; do not launch production from db:push."
+  },
+  {
+    key: "manual_edge",
+    label: "TLS / WAF / hard body limits",
+    detail:
+      "Confirm TLS termination, trusted forwarding, WAF throttling and edge body-size enforcement."
+  },
+  {
+    key: "manual_backups",
+    label: "Backup / restore exercise",
+    detail:
+      "Confirm encrypted backups and complete a tested restore exercise."
+  },
+  {
+    key: "manual_monitoring",
+    label: "Monitoring / incident response",
+    detail:
+      "Validate scheduler cadence, signed alert delivery, escalation ownership and incident runbooks."
+  },
+  {
+    key: "manual_payments",
+    label: "Payment provider operational validation",
+    detail:
+      "Validate live provider credentials, webhook registration, payout-account ownership, failure escalation, reversal semantics and accounting reconciliation against the RAM ledger."
+  }
+] as const;
+
+export type PilotManualGateKey =
+  (typeof PILOT_MANUAL_GATES)[number]["key"];
 
 function truthy(value: string | undefined) {
   return value?.trim().toLowerCase() === "true";
@@ -161,6 +208,79 @@ export function evaluatePilotReadiness(
         : "Configure an HTTPS RAM_PAYMENT_GATEWAY_URL and disable RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL."
   });
 
+  const monitoringEnabled = env.RAM_MONITORING_ENABLED === "true";
+  checks.push({
+    id: "monitoring_enabled",
+    label: "Operational monitoring enabled",
+    status: monitoringEnabled ? "PASS" : "BLOCK",
+    detail: monitoringEnabled
+      ? "Operational monitoring is enabled."
+      : "Set RAM_MONITORING_ENABLED=true before pilot launch."
+  });
+
+  const monitoringRunToken = env.RAM_MONITORING_RUN_TOKEN;
+  const monitoringRunTokenDistinct =
+    strongMonitoringSecret(monitoringRunToken) &&
+    monitoringRunToken !== env.AUTH_SECRET &&
+    monitoringRunToken !== env.RAM_IDENTITY_ASSERTION_SECRET &&
+    monitoringRunToken !== env.RAM_PAYMENT_GATEWAY_SECRET;
+
+  checks.push({
+    id: "monitoring_run_token",
+    label: "Monitoring scheduler token",
+    status: monitoringRunTokenDistinct ? "PASS" : "BLOCK",
+    detail: monitoringRunTokenDistinct
+      ? "Monitoring scheduler uses a strong independent bearer token."
+      : "Configure a strong RAM_MONITORING_RUN_TOKEN distinct from session, identity and payment secrets."
+  });
+
+  const monitoringAlertSecret = env.RAM_MONITORING_ALERT_WEBHOOK_SECRET;
+  const monitoringAlertSecretDistinct =
+    strongMonitoringSecret(monitoringAlertSecret) &&
+    monitoringAlertSecret !== env.AUTH_SECRET &&
+    monitoringAlertSecret !== env.RAM_IDENTITY_ASSERTION_SECRET &&
+    monitoringAlertSecret !== env.RAM_PAYMENT_GATEWAY_SECRET &&
+    monitoringAlertSecret !== monitoringRunToken;
+
+  checks.push({
+    id: "monitoring_alert_secret",
+    label: "Monitoring alert signing secret",
+    status: monitoringAlertSecretDistinct ? "PASS" : "BLOCK",
+    detail: monitoringAlertSecretDistinct
+      ? "Monitoring alerts use a strong independent signing secret."
+      : "Configure a strong RAM_MONITORING_ALERT_WEBHOOK_SECRET distinct from all other RAM secrets."
+  });
+
+  const monitoringAlertUrl = env.RAM_MONITORING_ALERT_WEBHOOK_URL ?? "";
+  const monitoringAlertHttps =
+    /^https:\/\//i.test(monitoringAlertUrl) &&
+    env.RAM_MONITORING_ALLOW_INSECURE_LOCAL !== "true";
+
+  checks.push({
+    id: "monitoring_alert_url",
+    label: "Monitoring alert HTTPS endpoint",
+    status: monitoringAlertHttps ? "PASS" : "BLOCK",
+    detail: monitoringAlertHttps
+      ? "Monitoring alert receiver uses HTTPS and the CI loopback override is disabled."
+      : "Configure an HTTPS RAM_MONITORING_ALERT_WEBHOOK_URL and disable RAM_MONITORING_ALLOW_INSECURE_LOCAL."
+  });
+
+  let monitoringThresholdsValid = true;
+  try {
+    monitoringConfig(env);
+  } catch {
+    monitoringThresholdsValid = false;
+  }
+
+  checks.push({
+    id: "monitoring_thresholds",
+    label: "Monitoring thresholds",
+    status: monitoringThresholdsValid ? "PASS" : "BLOCK",
+    detail: monitoringThresholdsValid
+      ? "Monitoring thresholds are within reviewed positive bounds."
+      : "One or more RAM_MONITORING_* threshold values are invalid."
+  });
+
   const mutationBytes = Number(env.RAM_MAX_MUTATION_BYTES ?? "1048576");
   checks.push({
     id: "mutation_limit",
@@ -179,21 +299,12 @@ export function evaluatePilotReadiness(
         : "RAM_MAX_MUTATION_BYTES must be between 16384 and 10485760."
   });
 
-  const manual = [
-    ["identity", "Identity provider validation", "Validate the upstream provider/gateway claim mapping, MFA signal, signing-secret handling and incident revocation procedure."],
-    ["migrations", "Reviewed database migrations", "Apply reviewed Prisma migrations; do not launch production from db:push."],
-    ["edge", "TLS / WAF / hard body limits", "Confirm TLS termination, trusted forwarding, WAF throttling and edge body-size enforcement."],
-    ["backups", "Backup / restore exercise", "Confirm encrypted backups and complete a tested restore exercise."],
-    ["monitoring", "Monitoring / incident response", "Confirm centralized logs, alerting, escalation ownership and incident runbooks."],
-    ["payments", "Payment provider operational validation", "Validate live provider credentials, webhook registration, payout-account ownership, failure escalation, and accounting reconciliation against the RAM ledger."]
-  ] as const;
-
-  for (const [id, label, detail] of manual) {
+  for (const gate of PILOT_MANUAL_GATES) {
     checks.push({
-      id: "manual_" + id,
-      label,
+      id: gate.key,
+      label: gate.label,
       status: "MANUAL",
-      detail
+      detail: gate.detail
     });
   }
 

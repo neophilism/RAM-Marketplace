@@ -18,6 +18,17 @@ const readyEnv = {
   RAM_PAYMENT_GATEWAY_URL: "https://payments.example.test",
   RAM_PAYMENT_GATEWAY_SECRET: "separate-payment-gateway-secret-value-2026",
   RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL: "false",
+  RAM_MONITORING_ENABLED: "true",
+  RAM_MONITORING_RUN_TOKEN: "separate-monitoring-run-token-value-2026",
+  RAM_MONITORING_ALERT_WEBHOOK_URL: "https://alerts.example.test/ram",
+  RAM_MONITORING_ALERT_WEBHOOK_SECRET: "separate-monitoring-alert-secret-value-2026",
+  RAM_MONITORING_ALLOW_INSECURE_LOCAL: "false",
+  RAM_MONITORING_PAYMENT_UNKNOWN_MINUTES: "10",
+  RAM_MONITORING_PAYMENT_PROCESSING_MINUTES: "60",
+  RAM_MONITORING_DISPUTE_HOURS: "24",
+  RAM_MONITORING_PICKUP_HOURS: "24",
+  RAM_MONITORING_ORG_VERIFICATION_HOURS: "48",
+  RAM_MONITORING_MAX_RUN_AGE_MINUTES: "15",
   RAM_DEMO_AUTH_ENABLED: "false",
   RAM_PUBLIC_ONBOARDING_ENABLED: "false",
   RAM_MAX_MUTATION_BYTES: "1048576"
@@ -89,6 +100,29 @@ test("pilot readiness blocks insecure or shared payment gateway configuration", 
     "payment_secret",
     "payment_gateway_name",
     "payment_gateway_url"
+  ]) {
+    assert.equal(checks.find((check) => check.id === id)?.status, "BLOCK");
+  }
+});
+
+
+test("pilot readiness blocks missing, shared or insecure monitoring configuration", () => {
+  const checks = evaluatePilotReadiness({
+    ...readyEnv,
+    RAM_MONITORING_ENABLED: "false",
+    RAM_MONITORING_RUN_TOKEN: readyEnv.AUTH_SECRET,
+    RAM_MONITORING_ALERT_WEBHOOK_URL: "http://127.0.0.1:4120",
+    RAM_MONITORING_ALERT_WEBHOOK_SECRET: readyEnv.RAM_PAYMENT_GATEWAY_SECRET,
+    RAM_MONITORING_ALLOW_INSECURE_LOCAL: "true",
+    RAM_MONITORING_PAYMENT_UNKNOWN_MINUTES: "0"
+  });
+
+  for (const id of [
+    "monitoring_enabled",
+    "monitoring_run_token",
+    "monitoring_alert_secret",
+    "monitoring_alert_url",
+    "monitoring_thresholds"
   ]) {
     assert.equal(checks.find((check) => check.id === id)?.status, "BLOCK");
   }
