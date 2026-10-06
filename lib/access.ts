@@ -16,6 +16,7 @@ export type Capability =
   | "pricing:manage"
   | "settlement:manage"
   | "dispute:manage"
+  | "audit:read"
   | "disclosure:request"
   | "disclosure:ram_review"
   | "disclosure:supplier_review"
@@ -39,6 +40,7 @@ const capabilityPermission: Record<Capability, Permission> = {
   "pricing:manage": "PRICING_POLICY_MANAGE",
   "settlement:manage": "PAYOUT_MANAGE",
   "dispute:manage": "MARKETPLACE_OPERATE",
+  "audit:read": "AUDIT_READ",
   "disclosure:request": "MATCH_REVIEW",
   "disclosure:ram_review": "SOURCE_DISCLOSURE_APPROVE",
   "disclosure:supplier_review": "SOURCE_DISCLOSURE_APPROVE",

@@ -20,6 +20,7 @@ const capabilities: { id: Capability; label: string }[] = [
   { id: "pricing:manage", label: "Manage supplier pricing policy" },
   { id: "settlement:manage", label: "Manage buyer payments, supplier payouts and reconciliation" },
   { id: "dispute:manage", label: "Resolve rejected-receipt disputes" },
+  { id: "audit:read", label: "Read global audit history" },
   { id: "disclosure:request", label: "Request relevant source information" },
   { id: "disclosure:ram_review", label: "Review source requests for relevance" },
   { id: "disclosure:supplier_review", label: "Approve farm source disclosures" },

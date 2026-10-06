@@ -78,3 +78,11 @@ test("RAM operations can resolve disputes while finance and buyer roles cannot",
   assert.equal(can("RESEARCH_PROCUREMENT", "dispute:manage"), false);
   assert.equal(can("RESEARCH_COMPLIANCE", "dispute:manage"), false);
 });
+
+
+test("global audit history is restricted to RAM super admin", () => {
+  assert.equal(can("RAM_SUPER_ADMIN", "audit:read"), true);
+  assert.equal(can("RAM_MARKETPLACE_OPS", "audit:read"), false);
+  assert.equal(can("RAM_COMPLIANCE", "audit:read"), false);
+  assert.equal(can("RAM_FINANCE_ADMIN", "audit:read"), false);
+});

@@ -9,6 +9,7 @@ RAM fails closed toward PostgreSQL in production. A deployment should set:
 - `AUTH_SECRET` — long random secret used to sign HTTP-only session cookies.
 - `RAM_PUBLIC_ONBOARDING_ENABLED=false` until the chosen external identity provider / email-verification path is connected.
 - `RAM_DEMO_AUTH_ENABLED=false`.
+- `RAM_MAX_MUTATION_BYTES=1048576` unless a different reviewed application limit is required.
 
 Use `.env.example` for local configuration.
 
@@ -49,6 +50,18 @@ RAM currently implements the application session boundary:
 
 The external identity proofing mechanism is deliberately deployment-configurable. Local development can use environment-gated demo identities. Production demo auth is off unless explicitly enabled.
 
+## Request security
+
+Unsafe `/api/*` requests pass explicit same-origin validation in addition to `SameSite=Strict` cookies. Cross-site Fetch Metadata is rejected, production fails closed when no usable same-origin source is available, and declared request bodies are capped by `RAM_MAX_MUTATION_BYTES`.
+
+The platform/reverse proxy must separately enforce a hard request-body cap so chunked requests cannot bypass a `Content-Length`-based application check.
+
+Public onboarding and demo sign-in use PostgreSQL-backed fixed-window throttles in deployed PostgreSQL mode. Production should also configure edge/WAF throttling.
+
+Security headers are configured centrally in `next.config.ts`. HSTS is production-only.
+
+See `docs/SECURITY.md` for the complete application/infrastructure split.
+
 ## Onboarding
 
 Self-onboarding creates an organization, its first user membership and—for farms—a restricted farm-site record. New organizations begin in `PENDING_VERIFICATION`.
@@ -69,3 +82,5 @@ npm run dev
 ```
 
 Before a production launch, replace `db:push` with committed migrations and connect the selected production identity provider.
+
+Also configure TLS, edge/WAF throttling, trusted forwarding headers, PostgreSQL network restrictions, encrypted backups, centralized logging/alerting, dependency/image scanning and tested restore/incident procedures before admitting real transactions.
