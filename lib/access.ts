@@ -45,21 +45,43 @@ export const demoActors = {
   scientist: {
     name: "Dr. Maya Chen",
     role: "RESEARCH_PI" as const,
-    organization: "Example Translational Sciences Lab"
+    organization: "Example Translational Sciences Lab",
+    organizationId: "demo-research-organization"
+  },
+  procurement: {
+    name: "Avery Brooks",
+    role: "RESEARCH_PROCUREMENT" as const,
+    organization: "Example Translational Sciences Lab",
+    organizationId: "demo-research-organization"
   },
   farmer: {
     name: "Alex Morgan",
     role: "SUPPLIER_OWNER_ADMIN" as const,
-    organization: "Anonymous Partner Farm"
+    organization: "Anonymous Partner Farm",
+    organizationId: "demo-farm-organization"
   },
   veterinarian: {
     name: "Dr. Jordan Reyes",
     role: "VETERINARIAN" as const,
-    organization: "RAM Veterinary Network"
+    organization: "RAM Veterinary Network",
+    organizationId: "demo-veterinary-organization"
   },
   ram: {
     name: "RAM Operations",
     role: "RAM_SUPER_ADMIN" as const,
-    organization: "RAM Corporation"
+    organization: "RAM Corporation",
+    organizationId: "demo-ram-organization"
+  },
+  finance: {
+    name: "RAM Finance",
+    role: "RAM_FINANCE_ADMIN" as const,
+    organization: "RAM Corporation",
+    organizationId: "demo-ram-organization"
+  },
+  compliance: {
+    name: "RAM Compliance",
+    role: "RAM_COMPLIANCE" as const,
+    organization: "RAM Corporation",
+    organizationId: "demo-ram-organization"
   }
 };
