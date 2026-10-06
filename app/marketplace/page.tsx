@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getMarketplaceListings } from "@/lib/server/marketplace";
 
-export default function MarketplacePage() {
-  const animalListings = getMarketplaceListings();
+export const dynamic = "force-dynamic";
+
+export default async function MarketplacePage() {
+  const animalListings = await getMarketplaceListings();
 
   return (
     <section className="page">
@@ -29,9 +31,9 @@ export default function MarketplacePage() {
                 <div className="cardTopline"><span className="pill">{animal.species}</span>{animal.ramVerified && <span className="verified">RAM verified</span>}</div>
                 <h2>{animal.condition}</h2>
                 <p>{animal.summary}</p>
-                <div className="specRow"><span>{animal.breed}</span><span>{animal.age}</span><span>{animal.sex}</span><span>{animal.weightKg} kg</span></div>
+                <div className="specRow"><span>{animal.breed}</span><span>{animal.age}</span><span>{animal.sex}</span><span>{animal.weightKg || "—"} kg</span></div>
               </div>
-              <div className="cardAside"><strong>${animal.priceUsd.toLocaleString()}</strong><span>{animal.region}</span><span>Available in {animal.availability}</span></div>
+              <div className="cardAside"><strong>${animal.priceUsd.toLocaleString()}</strong><span>{animal.region}</span><span>{animal.availability}</span></div>
             </Link>
           ))}
         </div>
