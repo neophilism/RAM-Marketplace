@@ -62,7 +62,10 @@ export interface AnimalListing {
   condition: string;
   phenotype: string[];
   diseaseStage: string;
+  etiology?: string;
   diagnosticConfidence: "Confirmed" | "High" | "Moderate";
+  comorbidities: string[];
+  diagnosticEvidence: string[];
   region: string;
   availability: string;
   priceUsd: number;
