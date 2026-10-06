@@ -56,7 +56,7 @@ export interface AnimalListing {
   id: string;
   species: string;
   breed: string;
-  sex: "Female" | "Male";
+  sex: "Female" | "Male" | "Unknown";
   age: string;
   weightKg: number;
   condition: string;
