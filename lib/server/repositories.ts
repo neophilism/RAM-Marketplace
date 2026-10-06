@@ -202,6 +202,7 @@ export async function createResearchNeed(
         maxAgeMonths: input.maxAgeMonths,
         sex: input.sex,
         diseaseStage: input.diseaseStage,
+        etiologyRequirement: input.etiologyRequirement,
         requiredPhenotype: input.requiredPhenotype,
         exclusionCriteria: input.exclusionCriteria,
         acceptableComorbidities: input.acceptableComorbidities,
