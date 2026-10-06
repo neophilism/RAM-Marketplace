@@ -133,6 +133,14 @@ enum VeterinaryReviewOutcome {
   WELFARE_HOLD
 }
 
+enum ResearchMatchStatus {
+  CANDIDATE
+  SHORTLISTED
+  SELECTED
+  REJECTED
+  STALE
+}
+
 model Organization {
   id            String             @id @default(cuid())
   name          String
@@ -239,6 +247,7 @@ model AnimalCase {
   veterinaryReviews    VeterinaryReview[]
   disclosureRequests   DisclosureRequest[]
   orders               Order[]
+  matches              ResearchMatch[]
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
@@ -283,8 +292,13 @@ model VeterinaryReview {
   outcome        VeterinaryReviewOutcome @default(PENDING)
   diagnosis      String?
   welfareNotes   String?
-  diagnosticPlan String?
-  reviewedAt     DateTime?
+  diagnosticPlan       String?
+  diseaseStage         String?
+  diagnosticConfidence String?
+  phenotype            Json?
+  publicSummary        String?
+  transportReady       Boolean?
+  reviewedAt           DateTime?
   animalCase     AnimalCase              @relation(fields: [animalCaseId], references: [publicId])
   reviewer       User                    @relation("VetReviewer", fields: [reviewerUserId], references: [id])
   createdAt      DateTime                @default(now())
@@ -317,11 +331,38 @@ model ResearchNeed {
   status                  ResearchNeedStatus @default(DRAFT)
   organization            Organization       @relation(fields: [organizationId], references: [id])
   createdBy               User               @relation("ResearchNeedCreator", fields: [createdByUserId], references: [id])
+  matches                 ResearchMatch[]
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
 
   @@index([organizationId, status])
   @@index([condition, species, status])
+}
+
+model ResearchMatch {
+  id                   String              @id @default(cuid())
+  researchNeedId       String
+  animalCaseId         String
+  status               ResearchMatchStatus @default(CANDIDATE)
+  totalScore           Int
+  phenotypeFit         Int
+  diagnosticConfidence Int
+  etiologyFit          Int
+  comorbidityFit       Int
+  timingAvailability   Int
+  logisticsFit         Int
+  priceFit             Int
+  hardGates            Json
+  reviewFlags          Json
+  reasons              Json
+  generatedAt          DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  researchNeed         ResearchNeed        @relation(fields: [researchNeedId], references: [id])
+  animalCase           AnimalCase          @relation(fields: [animalCaseId], references: [publicId])
+
+  @@unique([researchNeedId, animalCaseId])
+  @@index([researchNeedId, totalScore])
+  @@index([animalCaseId, status])
 }
 
 model DisclosureRequest {
