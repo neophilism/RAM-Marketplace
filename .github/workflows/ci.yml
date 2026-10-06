@@ -32,3 +32,74 @@ jobs:
           server_pid=$!
           trap 'cat /tmp/ram-e2e.log; kill "$server_pid" 2>/dev/null || true' EXIT
           npm run e2e:prototype
+
+
+  postgres-integration:
+    needs: verify
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ram_marketplace
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ram_marketplace"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ram_marketplace
+      RAM_DATA_BACKEND: postgres
+      RAM_DEMO_AUTH_ENABLED: "true"
+      RAM_PUBLIC_ONBOARDING_ENABLED: "false"
+      AUTH_SECRET: ram-ci-postgres-secret-that-is-long-enough-2026
+      RAM_MAX_MUTATION_BYTES: "1048576"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --include=dev
+      - name: Deploy committed migrations to empty PostgreSQL
+        run: npm run db:migrate:deploy
+      - name: Verify migration status
+        run: npm run db:migrate:status
+      - name: Verify database/schema drift is empty
+        run: npm run db:migrate:drift
+      - name: Seed controlled PostgreSQL E2E identities
+        run: npm run db:seed:e2e
+      - name: Build production application
+        run: npm run build
+      - name: Live multi-role PostgreSQL E2E
+        env:
+          RAM_E2E_BASE_URL: http://127.0.0.1:3118
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3118 > /tmp/ram-postgres-e2e.log 2>&1 &
+          server_pid=$!
+          trap 'cat /tmp/ram-postgres-e2e.log; kill "$server_pid" 2>/dev/null || true' EXIT
+          npm run e2e:live
+      - name: Verify PostgreSQL dump and restore
+        env:
+          PGPASSWORD: postgres
+        run: |
+          pg_dump -h 127.0.0.1 -U postgres -d ram_marketplace --format=custom --no-owner --no-acl --file=/tmp/ram-marketplace.dump
+          createdb -h 127.0.0.1 -U postgres ram_restore
+          pg_restore -h 127.0.0.1 -U postgres -d ram_restore --no-owner --no-acl /tmp/ram-marketplace.dump
+
+          for table in Organization User AnimalCase ResearchNeed Order FinancialSettlement FinancialLedgerEntry AuditEvent; do
+            source_count=$(psql -h 127.0.0.1 -U postgres -d ram_marketplace -Atc "SELECT count(*) FROM \"$table\";")
+            restore_count=$(psql -h 127.0.0.1 -U postgres -d ram_restore -Atc "SELECT count(*) FROM \"$table\";")
+            test "$source_count" = "$restore_count"
+          done
+
+          source_migrations=$(psql -h 127.0.0.1 -U postgres -d ram_marketplace -Atc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;')
+          restore_migrations=$(psql -h 127.0.0.1 -U postgres -d ram_restore -Atc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;')
+          test "$source_migrations" = "$restore_migrations"
+          test "$restore_migrations" -ge 1
+
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/ram_restore npm run db:migrate:status

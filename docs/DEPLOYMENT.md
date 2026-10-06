@@ -24,9 +24,12 @@ npm run prisma:validate
 npm run prisma:generate
 npm run db:push
 npm run db:migrate:dev
+npm run db:migrate:deploy
+npm run db:migrate:status
+npm run db:migrate:drift
 ```
 
-For a disposable development database, `db:push` is adequate. Production schema changes should be committed as reviewed migrations before deployment.
+For a disposable development database, `db:push` is adequate. Production and pilot databases must use the committed migration history via `db:migrate:deploy`; `db:push` and `migrate reset` are not production deployment tools. See `docs/DATABASE.md`.
 
 ## Data backend
 
@@ -77,11 +80,13 @@ cp .env.example .env
 # edit DATABASE_URL and AUTH_SECRET
 npm install
 npm run prisma:validate
-npm run db:push
+npm run db:migrate:deploy
+npm run db:migrate:status
+npm run db:migrate:drift
 npm run dev
 ```
 
-Before a production launch, replace `db:push` with committed migrations and connect the selected production identity provider.
+The repository now contains the reviewed initial migration baseline. Before a production launch, apply it with `db:migrate:deploy`, require clean migration status/drift checks, and connect the selected production identity provider.
 
 Also configure TLS, edge/WAF throttling, trusted forwarding headers, PostgreSQL network restrictions, encrypted backups, centralized logging/alerting, dependency/image scanning and tested restore/incident procedures before admitting real transactions.
 
@@ -91,6 +96,6 @@ Run `npm run pilot:check` against the intended production environment. A non-zer
 
 RAM also exposes a super-admin `/ops/pilot` dashboard with the same automatic checks plus manual deployment gates.
 
-CI runs `npm run e2e:prototype` against the built application and covers the normal transaction path plus rejected-receipt replacement and refund paths. This harness validates application integration but does not replace PostgreSQL migration/backup testing or external identity/payment validation.
+CI runs the live workflow twice: once against isolated prototype storage and again against PostgreSQL created from the committed migration history. The PostgreSQL job also checks schema drift and performs a populated dump/restore comparison. These checks do not replace production-provider backup/PITR drills or external identity/payment validation.
 
 See `docs/PILOT.md` before admitting real transactions.

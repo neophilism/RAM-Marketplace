@@ -123,8 +123,9 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 13. Rejected-receipt disputes, replacements, credits and refunds — implemented
 14. Audit/security hardening — implemented at application boundary
 15. Live multi-role end-to-end tests and pilot-readiness tooling — implemented
-16. Production integrations, reviewed migrations and pilot deployment
+16. Reviewed PostgreSQL migrations, PostgreSQL E2E and backup/restore verification — implemented
+17. External identity/payment integrations, production monitoring and pilot deployment
 
 ## Test policy
 
-CI protects non-negotiable business rules, not just UI compilation. Unit/domain/security tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, RBAC separation, restricted-source authorization, marketplace anonymization and append-only records. After the production build, CI launches the built application in isolated prototype mode and drives live HTTP scenarios across supplier, researcher, veterinary, RAM operations, procurement, finance, compliance, transport and receiving roles. See `docs/PILOT.md`.
+CI protects non-negotiable business rules, not just UI compilation. Unit/domain/security tests cover supplier-price decoupling, canonical candidate/order transitions, the compliance hard gate, matching weights, RBAC separation, restricted-source authorization, marketplace anonymization and append-only records. After the production build, CI launches the built application in isolated prototype mode and drives live HTTP scenarios across supplier, researcher, veterinary, RAM operations, procurement, finance, compliance, transport and receiving roles. A second CI job provisions empty PostgreSQL, deploys the committed migration history, checks live schema drift, seeds controlled identities, runs the same multi-role E2E against PostgreSQL, and verifies a populated `pg_dump` can be restored into a second database with matching critical record counts. See `docs/PILOT.md` and `docs/DATABASE.md`.
