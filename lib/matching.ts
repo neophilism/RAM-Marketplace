@@ -285,7 +285,7 @@ export function scoreMatch(animal: MatchAnimal, need: MatchNeed): ExplainableMat
   }
 
   const comorbidityText = animal.comorbidities.join(" ");
-  let comorbidityFit = MATCH_WEIGHTS.comorbidityFit;
+  let comorbidityFit: number = MATCH_WEIGHTS.comorbidityFit;
   if (need.exclusionCriteria?.trim()) {
     const exclusionItems = criteriaItems(need.exclusionCriteria);
     const overlaps = exclusionItems.map((item) => ({
