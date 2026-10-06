@@ -53,7 +53,10 @@ export async function getMarketplaceListings(): Promise<AnimalListing[]> {
       condition: true,
       phenotype: true,
       diseaseStage: true,
+      etiology: true,
       diagnosticConfidence: true,
+      comorbidities: true,
+      diagnosticEvidence: true,
       regionLabel: true,
       availabilityText: true,
       listPriceCents: true,
@@ -76,7 +79,14 @@ export async function getMarketplaceListings(): Promise<AnimalListing[]> {
         ? row.phenotype.filter((item): item is string => typeof item === "string")
         : [],
       diseaseStage: row.diseaseStage ?? "Not specified",
+      etiology: row.etiology ?? undefined,
       diagnosticConfidence: confidence(row.diagnosticConfidence),
+      comorbidities: Array.isArray(row.comorbidities)
+        ? row.comorbidities.filter((item): item is string => typeof item === "string")
+        : [],
+      diagnosticEvidence: Array.isArray(row.diagnosticEvidence)
+        ? row.diagnosticEvidence.filter((item): item is string => typeof item === "string")
+        : [],
       region: row.regionLabel,
       availability: row.availabilityText ?? "Contact RAM",
       priceUsd: Math.round((row.listPriceCents ?? 0) / 100),
