@@ -54,6 +54,9 @@ export function landingPageForRole(role: Role) {
   if (role === "SUPPLIER_OWNER_ADMIN" || role === "SUPPLIER_STAFF") return "/farm";
   if (role === "VETERINARIAN") return "/vet";
   if (role === "TRANSPORT_PROVIDER") return "/account";
+  if (role === "RESEARCH_PROCUREMENT") return "/orders";
+  if (role === "RAM_FINANCE_ADMIN") return "/finance";
+  if (role === "RAM_COMPLIANCE") return "/compliance";
   if (role.startsWith("RAM_")) return "/ops";
   return "/research";
 }

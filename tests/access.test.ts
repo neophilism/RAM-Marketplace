@@ -16,3 +16,23 @@ test("capability enforcement throws when access is missing", () => {
     /Forbidden/
   );
 });
+
+
+test("research PI can reserve but cannot commercially commit the institution", () => {
+  assert.equal(can("RESEARCH_PI", "order:reserve"), true);
+  assert.equal(can("RESEARCH_PI", "order:buyer_commit"), false);
+});
+
+test("research procurement can commit buyer quotes for the organization", () => {
+  assert.equal(can("RESEARCH_PROCUREMENT", "order:reserve"), true);
+  assert.equal(can("RESEARCH_PROCUREMENT", "order:buyer_commit"), true);
+});
+
+test("RAM finance and compliance powers are separated", () => {
+  assert.equal(can("RAM_FINANCE_ADMIN", "pricing:manage"), true);
+  assert.equal(can("RAM_FINANCE_ADMIN", "order:acquisition_commit"), true);
+  assert.equal(can("RAM_FINANCE_ADMIN", "order:clearance"), false);
+
+  assert.equal(can("RAM_COMPLIANCE", "order:clearance"), true);
+  assert.equal(can("RAM_COMPLIANCE", "order:acquisition_commit"), false);
+});

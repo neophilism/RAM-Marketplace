@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMarketplaceListing } from "@/lib/server/marketplace";
 
@@ -12,7 +13,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
     <section className="page narrow">
       <div className="detailHeader">
         <div><div className="eyebrow">{animal.id}</div><h1>{animal.condition}</h1><p>{animal.summary}</p></div>
-        <div className="priceBox"><span>Model price</span><strong>${animal.priceUsd.toLocaleString()}</strong><button className="primaryButton" type="button">Reserve model</button></div>
+        <div className="priceBox"><span>Model price</span><strong>${animal.priceUsd.toLocaleString()}</strong><Link className="primaryButton" href="/research">Reserve through a research need</Link></div>
       </div>
       <div className="detailGrid">
         <article className="panel">

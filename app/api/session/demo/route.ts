@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   const principal = {
     userId: `demo-${actorKey}-user`,
-    organizationId: `demo-${actorKey}-organization`,
+    organizationId: actor.organizationId,
     role: actor.role,
     email: `${actorKey}@demo.ram.invalid`,
     name: actor.name

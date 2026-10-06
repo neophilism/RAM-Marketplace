@@ -30,6 +30,62 @@ export interface PrototypeAnimalCase {
   input: AnimalSubmissionInput;
 }
 
+export interface PrototypeOrderClearance {
+  decision: "PENDING" | "CLEARED" | "FAILED";
+  protocolConfirmed: boolean;
+  receivingFacilityConfirmed: boolean;
+  welfareConfirmed: boolean;
+  biosecurityConfirmed: boolean;
+  movementRequirementsConfirmed: boolean;
+  transportPlanConfirmed: boolean;
+  sourceProvenanceConfirmed: boolean;
+  blockingFindings: string[];
+  notes?: string;
+  reviewerUserId?: string;
+  reviewedAt?: string;
+}
+
+export interface PrototypeOrder {
+  id: string;
+  animalCaseId: string;
+  buyerOrganizationId: string;
+  researchNeedId: string;
+  createdByUserId: string;
+  status: string;
+  buyerPriceCents?: number;
+  buyerPriceComponents?: Record<string, number>;
+  supplierPricingPolicyId?: string;
+  supplierScheduleCents?: number;
+  supplierMarketCeilingCents?: number;
+  supplierAcquisitionCents?: number;
+  directCostsCents: number;
+  holdExpiresAt?: string;
+  quoteIssuedAt?: string;
+  quoteExpiresAt?: string;
+  buyerCommittedAt?: string;
+  acquisitionCommittedAt?: string;
+  clearanceStartedAt?: string;
+  clearedAt?: string;
+  receivingFacilityName?: string;
+  receivingFacilityAddress?: string;
+  protocolReference?: string;
+  institutionalApprovalAttested: boolean;
+  purchasingAuthorityAttested: boolean;
+  clearance?: PrototypeOrderClearance;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PrototypeSupplierPricingPolicy {
+  id: string;
+  species: string;
+  standardizedCullScheduleCents: number;
+  marketCeilingCents: number;
+  active: boolean;
+  effectiveFrom: string;
+  createdByUserId: string;
+}
+
 export interface PrototypeResearchNeed {
   id: string;
   title: string;
@@ -43,8 +99,12 @@ interface PrototypeStore {
   animals: PrototypeAnimalCase[];
   researchNeeds: PrototypeResearchNeed[];
   matches: ExplainableMatch[];
+  orders: PrototypeOrder[];
+  pricingPolicies: PrototypeSupplierPricingPolicy[];
   animalSequence: number;
   researchSequence: number;
+  orderSequence: number;
+  pricingPolicySequence: number;
 }
 
 declare global {
@@ -58,8 +118,12 @@ function store(): PrototypeStore {
       animals: [],
       researchNeeds: [],
       matches: [],
+      orders: [],
+      pricingPolicies: [],
       animalSequence: 2000,
-      researchSequence: 200
+      researchSequence: 200,
+      orderSequence: 300,
+      pricingPolicySequence: 10
     };
   }
   return globalThis.__ramPrototypeStore;
@@ -200,4 +264,75 @@ export function replacePrototypeMatchesForAnimal(
     }
   }
   return matches;
+}
+
+
+export function savePrototypeOrder(
+  input: Omit<PrototypeOrder, "id" | "createdAt" | "updatedAt">
+) {
+  const db = store();
+  db.orderSequence += 1;
+  const now = new Date().toISOString();
+  const order: PrototypeOrder = {
+    ...input,
+    id: `ORD-${String(db.orderSequence).padStart(6, "0")}`,
+    createdAt: now,
+    updatedAt: now
+  };
+  db.orders.unshift(order);
+  return order;
+}
+
+export function getPrototypeOrders() {
+  return [...store().orders];
+}
+
+export function getPrototypeOrder(id: string) {
+  return store().orders.find((order) => order.id === id);
+}
+
+export function updatePrototypeOrder(
+  id: string,
+  patch: Partial<Omit<PrototypeOrder, "id" | "createdAt">>
+) {
+  const order = getPrototypeOrder(id);
+  if (!order) throw new Error("Order not found");
+  Object.assign(order, patch, { updatedAt: new Date().toISOString() });
+  return order;
+}
+
+export function savePrototypePricingPolicy(
+  input: Omit<PrototypeSupplierPricingPolicy, "id" | "effectiveFrom">
+) {
+  const db = store();
+  for (const existing of db.pricingPolicies) {
+    if (
+      existing.active &&
+      existing.species.toLowerCase() === input.species.toLowerCase()
+    ) {
+      existing.active = false;
+    }
+  }
+  db.pricingPolicySequence += 1;
+  const policy: PrototypeSupplierPricingPolicy = {
+    ...input,
+    id: `POL-${String(db.pricingPolicySequence).padStart(5, "0")}`,
+    effectiveFrom: new Date().toISOString()
+  };
+  db.pricingPolicies.unshift(policy);
+  return policy;
+}
+
+export function getPrototypePricingPolicies() {
+  return [...store().pricingPolicies];
+}
+
+export function getPrototypeActivePricingPolicy(species: string) {
+  return store().pricingPolicies
+    .filter(
+      (policy) =>
+        policy.active &&
+        policy.species.toLowerCase() === species.toLowerCase()
+    )
+    .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
 }

@@ -23,7 +23,10 @@ export const config = {
     "/account/:path*",
     "/farm/:path*",
     "/research/:path*",
+    "/orders/:path*",
     "/vet/:path*",
-    "/ops/:path*"
+    "/ops/:path*",
+    "/finance/:path*",
+    "/compliance/:path*"
   ]
 };

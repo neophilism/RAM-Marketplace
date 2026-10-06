@@ -8,6 +8,11 @@ export type Capability =
   | "source:approve_disclosure"
   | "research_need:create"
   | "match:review"
+  | "order:reserve"
+  | "order:buyer_commit"
+  | "order:acquisition_commit"
+  | "order:clearance"
+  | "pricing:manage"
   | "operations:manage";
 
 const capabilityPermission: Record<Capability, Permission> = {
@@ -18,6 +23,11 @@ const capabilityPermission: Record<Capability, Permission> = {
   "source:approve_disclosure": "SOURCE_DISCLOSURE_APPROVE",
   "research_need:create": "RESEARCH_REQUEST_MANAGE",
   "match:review": "MATCH_REVIEW",
+  "order:reserve": "MATCH_REVIEW",
+  "order:buyer_commit": "QUOTE_APPROVE",
+  "order:acquisition_commit": "PAYOUT_MANAGE",
+  "order:clearance": "COMPLIANCE_REVIEW",
+  "pricing:manage": "PRICING_POLICY_MANAGE",
   "operations:manage": "MARKETPLACE_OPERATE"
 };
 
@@ -35,21 +45,43 @@ export const demoActors = {
   scientist: {
     name: "Dr. Maya Chen",
     role: "RESEARCH_PI" as const,
-    organization: "Example Translational Sciences Lab"
+    organization: "Example Translational Sciences Lab",
+    organizationId: "demo-research-organization"
+  },
+  procurement: {
+    name: "Avery Brooks",
+    role: "RESEARCH_PROCUREMENT" as const,
+    organization: "Example Translational Sciences Lab",
+    organizationId: "demo-research-organization"
   },
   farmer: {
     name: "Alex Morgan",
     role: "SUPPLIER_OWNER_ADMIN" as const,
-    organization: "Anonymous Partner Farm"
+    organization: "Anonymous Partner Farm",
+    organizationId: "demo-farm-organization"
   },
   veterinarian: {
     name: "Dr. Jordan Reyes",
     role: "VETERINARIAN" as const,
-    organization: "RAM Veterinary Network"
+    organization: "RAM Veterinary Network",
+    organizationId: "demo-veterinary-organization"
   },
   ram: {
     name: "RAM Operations",
     role: "RAM_SUPER_ADMIN" as const,
-    organization: "RAM Corporation"
+    organization: "RAM Corporation",
+    organizationId: "demo-ram-organization"
+  },
+  finance: {
+    name: "RAM Finance",
+    role: "RAM_FINANCE_ADMIN" as const,
+    organization: "RAM Corporation",
+    organizationId: "demo-ram-organization"
+  },
+  compliance: {
+    name: "RAM Compliance",
+    role: "RAM_COMPLIANCE" as const,
+    organization: "RAM Corporation",
+    organizationId: "demo-ram-organization"
   }
 };

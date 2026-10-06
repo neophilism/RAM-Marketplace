@@ -102,3 +102,81 @@ export const candidatePublishSchema = z.object({
 
 export type VeterinaryReviewInput = z.infer<typeof veterinaryReviewSchema>;
 export type CandidatePublishInput = z.infer<typeof candidatePublishSchema>;
+
+
+export const reserveOrderSchema = z.object({
+  animalCaseId: z.string().min(3).max(120),
+  researchNeedId: z.string().min(3).max(120)
+});
+
+export const buyerCommitmentSchema = z.object({
+  orderId: z.string().min(3).max(120),
+  receivingFacilityName: z.string().min(2).max(240),
+  receivingFacilityAddress: z.string().min(5).max(800),
+  protocolReference: z.string().min(2).max(240),
+  institutionalApprovalAttested: z.literal(true),
+  purchasingAuthorityAttested: z.literal(true)
+});
+
+export const supplierPricingPolicySchema = z.object({
+  species: z.string().min(2).max(80),
+  standardizedCullScheduleUsd: z.coerce.number().nonnegative().max(1_000_000),
+  marketCeilingUsd: z.coerce.number().nonnegative().max(1_000_000)
+});
+
+export const clearanceReviewSchema = z.object({
+  orderId: z.string().min(3).max(120),
+  decision: z.enum(["CLEARED", "FAILED"]),
+  protocolConfirmed: z.boolean(),
+  receivingFacilityConfirmed: z.boolean(),
+  welfareConfirmed: z.boolean(),
+  biosecurityConfirmed: z.boolean(),
+  movementRequirementsConfirmed: z.boolean(),
+  transportPlanConfirmed: z.boolean(),
+  sourceProvenanceConfirmed: z.boolean(),
+  blockingFindings: z.string().max(6000).optional(),
+  notes: z.string().max(6000).optional()
+}).superRefine((value, ctx) => {
+  if (value.decision === "CLEARED") {
+    const requiredChecks = [
+      ["protocolConfirmed", value.protocolConfirmed],
+      ["receivingFacilityConfirmed", value.receivingFacilityConfirmed],
+      ["welfareConfirmed", value.welfareConfirmed],
+      ["biosecurityConfirmed", value.biosecurityConfirmed],
+      ["movementRequirementsConfirmed", value.movementRequirementsConfirmed],
+      ["transportPlanConfirmed", value.transportPlanConfirmed],
+      ["sourceProvenanceConfirmed", value.sourceProvenanceConfirmed]
+    ] as const;
+
+    for (const [field, confirmed] of requiredChecks) {
+      if (!confirmed) {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: "All clearance gates must be confirmed before an order can be cleared"
+        });
+      }
+    }
+
+    if (value.blockingFindings?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["blockingFindings"],
+        message: "A cleared order cannot contain blocking findings"
+      });
+    }
+  }
+
+  if (value.decision === "FAILED" && !value.blockingFindings?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["blockingFindings"],
+      message: "A failed clearance requires at least one blocking finding"
+    });
+  }
+});
+
+export type ReserveOrderInput = z.infer<typeof reserveOrderSchema>;
+export type BuyerCommitmentInput = z.infer<typeof buyerCommitmentSchema>;
+export type SupplierPricingPolicyInput = z.infer<typeof supplierPricingPolicySchema>;
+export type ClearanceReviewInput = z.infer<typeof clearanceReviewSchema>;

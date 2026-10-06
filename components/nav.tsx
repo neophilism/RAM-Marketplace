@@ -4,9 +4,12 @@ const links = [
   { href: "/", label: "Overview" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/research", label: "Research Needs" },
+  { href: "/orders", label: "Orders" },
   { href: "/farm", label: "Farm Portal" },
   { href: "/vet", label: "Vet Review" },
-  { href: "/ops", label: "RAM Ops" }
+  { href: "/ops", label: "RAM Ops" },
+  { href: "/finance", label: "Finance" },
+  { href: "/compliance", label: "Compliance" }
 ];
 
 export function Nav() {
@@ -19,7 +22,7 @@ export function Nav() {
       <nav aria-label="Primary navigation">
         {links.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}
       </nav>
-      <Link className="ghostButton" href="/account">Demo account</Link>
+      <Link className="ghostButton" href="/account">Account</Link>
     </header>
   );
 }

@@ -141,6 +141,12 @@ enum ResearchMatchStatus {
   STALE
 }
 
+enum ClearanceDecision {
+  PENDING
+  CLEARED
+  FAILED
+}
+
 model Organization {
   id            String             @id @default(cuid())
   name          String
@@ -165,6 +171,9 @@ model User {
   veterinaryReviews  VeterinaryReview[]  @relation("VetReviewer")
   disclosureRequests DisclosureRequest[] @relation("DisclosureRequester")
   auditEvents        AuditEvent[]        @relation("AuditActor")
+  createdOrders      Order[]             @relation("OrderCreator")
+  clearanceReviews   OrderClearance[]    @relation("ClearanceReviewer")
+  pricingPolicies    SupplierPricingPolicy[] @relation("PricingPolicyCreator")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -339,6 +348,7 @@ model ResearchNeed {
   organization            Organization       @relation(fields: [organizationId], references: [id])
   createdBy               User               @relation("ResearchNeedCreator", fields: [createdByUserId], references: [id])
   matches                 ResearchMatch[]
+  orders                  Order[]
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
 
@@ -391,20 +401,81 @@ model DisclosureRequest {
 }
 
 model Order {
-  id                       String       @id @default(cuid())
-  animalCaseId             String
-  buyerOrganizationId      String
-  status                   OrderStatus  @default(DRAFT)
-  buyerPriceCents          Int?
-  supplierAcquisitionCents Int?
-  directCostsCents         Int          @default(0)
-  animalCase               AnimalCase   @relation(fields: [animalCaseId], references: [publicId])
-  buyerOrganization        Organization @relation("BuyerOrganizationOrders", fields: [buyerOrganizationId], references: [id])
-  createdAt                DateTime     @default(now())
-  updatedAt                DateTime     @updatedAt
+  id                          String       @id @default(cuid())
+  animalCaseId                String
+  buyerOrganizationId         String
+  researchNeedId              String
+  createdByUserId             String
+  status                      OrderStatus  @default(DRAFT)
+  buyerPriceCents             Int?
+  buyerPriceComponents        Json?
+  supplierPricingPolicyId     String?
+  supplierScheduleCents       Int?
+  supplierMarketCeilingCents  Int?
+  supplierAcquisitionCents    Int?
+  directCostsCents            Int          @default(0)
+  holdExpiresAt               DateTime?
+  quoteIssuedAt               DateTime?
+  quoteExpiresAt              DateTime?
+  buyerCommittedAt            DateTime?
+  acquisitionCommittedAt      DateTime?
+  clearanceStartedAt          DateTime?
+  clearedAt                   DateTime?
+  receivingFacilityName       String?
+  receivingFacilityAddress    String?
+  protocolReference           String?
+  institutionalApprovalAttested Boolean    @default(false)
+  purchasingAuthorityAttested Boolean      @default(false)
+  animalCase                  AnimalCase   @relation(fields: [animalCaseId], references: [publicId])
+  buyerOrganization           Organization @relation("BuyerOrganizationOrders", fields: [buyerOrganizationId], references: [id])
+  researchNeed                ResearchNeed @relation(fields: [researchNeedId], references: [id])
+  createdBy                   User         @relation("OrderCreator", fields: [createdByUserId], references: [id])
+  supplierPricingPolicy       SupplierPricingPolicy? @relation(fields: [supplierPricingPolicyId], references: [id])
+  clearance                   OrderClearance?
+  createdAt                   DateTime     @default(now())
+  updatedAt                   DateTime     @updatedAt
 
   @@index([animalCaseId, status])
   @@index([buyerOrganizationId, status])
+  @@index([researchNeedId, status])
+}
+
+model SupplierPricingPolicy {
+  id                           String   @id @default(cuid())
+  species                      String
+  standardizedCullScheduleCents Int
+  marketCeilingCents           Int
+  active                       Boolean  @default(true)
+  effectiveFrom                DateTime @default(now())
+  effectiveTo                  DateTime?
+  createdByUserId              String
+  createdBy                    User     @relation("PricingPolicyCreator", fields: [createdByUserId], references: [id])
+  orders                       Order[]
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  @@index([species, active, effectiveFrom])
+}
+
+model OrderClearance {
+  id                           String            @id @default(cuid())
+  orderId                      String            @unique
+  reviewerUserId               String?
+  decision                     ClearanceDecision @default(PENDING)
+  protocolConfirmed            Boolean           @default(false)
+  receivingFacilityConfirmed   Boolean           @default(false)
+  welfareConfirmed             Boolean           @default(false)
+  biosecurityConfirmed         Boolean           @default(false)
+  movementRequirementsConfirmed Boolean          @default(false)
+  transportPlanConfirmed       Boolean           @default(false)
+  sourceProvenanceConfirmed    Boolean           @default(false)
+  blockingFindings             Json?
+  notes                        String?
+  reviewedAt                   DateTime?
+  order                        Order             @relation(fields: [orderId], references: [id])
+  reviewer                     User?             @relation("ClearanceReviewer", fields: [reviewerUserId], references: [id])
+  createdAt                    DateTime           @default(now())
+  updatedAt                    DateTime           @updatedAt
 }
 
 model AuditEvent {

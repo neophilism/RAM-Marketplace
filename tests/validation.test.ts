@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { animalSubmissionSchema } from "../lib/validation";
+import {
+  animalSubmissionSchema,
+  clearanceReviewSchema
+} from "../lib/validation";
 
 const validSubmission = {
   species: "Swine",
@@ -40,4 +43,49 @@ test("candidate intake requires a cull decision date, planned cull date and reas
     cullReason: ""
   };
   assert.equal(animalSubmissionSchema.safeParse(missingCullFacts).success, false);
+});
+
+
+test("clearance cannot pass with an unchecked hard gate", () => {
+  const result = clearanceReviewSchema.safeParse({
+    orderId: "order-1",
+    decision: "CLEARED",
+    protocolConfirmed: true,
+    receivingFacilityConfirmed: true,
+    welfareConfirmed: true,
+    biosecurityConfirmed: false,
+    movementRequirementsConfirmed: true,
+    transportPlanConfirmed: true,
+    sourceProvenanceConfirmed: true
+  });
+  assert.equal(result.success, false);
+});
+
+test("failed clearance requires a documented blocking finding", () => {
+  const withoutFinding = clearanceReviewSchema.safeParse({
+    orderId: "order-1",
+    decision: "FAILED",
+    protocolConfirmed: true,
+    receivingFacilityConfirmed: true,
+    welfareConfirmed: true,
+    biosecurityConfirmed: false,
+    movementRequirementsConfirmed: true,
+    transportPlanConfirmed: true,
+    sourceProvenanceConfirmed: true
+  });
+  assert.equal(withoutFinding.success, false);
+
+  const withFinding = clearanceReviewSchema.safeParse({
+    orderId: "order-1",
+    decision: "FAILED",
+    protocolConfirmed: true,
+    receivingFacilityConfirmed: true,
+    welfareConfirmed: true,
+    biosecurityConfirmed: false,
+    movementRequirementsConfirmed: true,
+    transportPlanConfirmed: true,
+    sourceProvenanceConfirmed: true,
+    blockingFindings: "Biosecurity clearance not satisfied."
+  });
+  assert.equal(withFinding.success, true);
 });
