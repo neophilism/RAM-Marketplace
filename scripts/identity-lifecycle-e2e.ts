@@ -3,15 +3,17 @@ import { PrismaClient } from "../generated/prisma/client";
 import { createExternalIdentityAssertion } from "../lib/auth/external-assertion";
 
 const base = process.env.RAM_E2E_BASE_URL ?? "http://127.0.0.1:3118";
-const assertionSecret = process.env.RAM_IDENTITY_ASSERTION_SECRET;
-const connectionString = process.env.DATABASE_URL;
 
-if (!assertionSecret) {
-  throw new Error("RAM_IDENTITY_ASSERTION_SECRET is required");
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(name + " is required");
+  }
+  return value;
 }
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required");
-}
+
+const assertionSecret = requiredEnv("RAM_IDENTITY_ASSERTION_SECRET");
+const connectionString = requiredEnv("DATABASE_URL");
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString })
