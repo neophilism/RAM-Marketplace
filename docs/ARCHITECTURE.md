@@ -101,7 +101,7 @@ Authorization will combine role permissions with organization, facility, order r
 
 ## Current transactional implementation
 
-The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment and compliance clearance. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
+The application now persists candidate intake, veterinary verification, research needs, explainable matches, reservations, quote snapshots, buyer commitment, independent supplier acquisition commitment, compliance clearance, transport assignment, chain-of-custody events and delivery. PostgreSQL is the durable system of record; the in-process prototype store mirrors these workflows for local demonstrations without infrastructure.
 
 The supplier-acquisition decision surface is intentionally blind to buyer identity and buyer price. Buyer-facing order projections are independently guarded from supplier economics and source identity. See `docs/TRANSACTIONS.md`.
 
@@ -116,8 +116,8 @@ The supplier-acquisition decision surface is intentionally blind to buyer identi
 7. Disclosure authorization service
 8. Matching engine
 9. Reservation/quote/acquisition workflow
-10. Compliance clearance + logistics
-11. Payment/payout ledger
+10. Compliance clearance + logistics — implemented through delivery
+11. Receiving acceptance + payment/payout ledger
 12. Audit/security hardening
 13. End-to-end tests and pilot deployment
 

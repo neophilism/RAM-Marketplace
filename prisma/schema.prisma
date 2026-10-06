@@ -147,6 +147,14 @@ enum ClearanceDecision {
   FAILED
 }
 
+enum TransportEventType {
+  ASSIGNED
+  PICKUP_CONFIRMED
+  EXCEPTION_REPORTED
+  RESUME_TRANSIT
+  DELIVERY_CONFIRMED
+}
+
 model Organization {
   id            String             @id @default(cuid())
   name          String
@@ -158,6 +166,7 @@ model Organization {
   buyerOrders   Order[]          @relation("BuyerOrganizationOrders")
   researchNeeds ResearchNeed[]
   disclosureRequests DisclosureRequest[] @relation("DisclosureRequesterOrganization")
+  transportAssignments TransportAssignment[] @relation("TransportOrganizationAssignments")
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 }
@@ -177,6 +186,9 @@ model User {
   createdOrders      Order[]             @relation("OrderCreator")
   clearanceReviews   OrderClearance[]    @relation("ClearanceReviewer")
   pricingPolicies    SupplierPricingPolicy[] @relation("PricingPolicyCreator")
+  assignedTransports TransportAssignment[] @relation("TransportAssignedUser")
+  transportAssignmentsCreated TransportAssignment[] @relation("TransportAssignedBy")
+  transportEvents    TransportEvent[] @relation("TransportEventActor")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -458,6 +470,7 @@ model Order {
   supplierPricingPolicy       SupplierPricingPolicy? @relation(fields: [supplierPricingPolicyId], references: [id])
   clearance                   OrderClearance?
   disclosureRequests          DisclosureRequest[]
+  transportAssignment         TransportAssignment?
   createdAt                   DateTime     @default(now())
   updatedAt                   DateTime     @updatedAt
 
@@ -502,6 +515,50 @@ model OrderClearance {
   reviewer                     User?             @relation("ClearanceReviewer", fields: [reviewerUserId], references: [id])
   createdAt                    DateTime           @default(now())
   updatedAt                    DateTime           @updatedAt
+}
+
+model TransportAssignment {
+  id                      String       @id @default(cuid())
+  orderId                 String       @unique
+  transportOrganizationId String
+  assignedTransportUserId String?
+  assignedByUserId        String
+  pickupWindowStart       DateTime?
+  pickupWindowEnd         DateTime?
+  deliveryWindowStart     DateTime?
+  deliveryWindowEnd       DateTime?
+  movementDocumentRefs    Json?
+  sanitationRequirements  String?
+  specialInstructions     String?
+  assignedAt              DateTime     @default(now())
+  order                   Order        @relation(fields: [orderId], references: [id])
+  transportOrganization   Organization @relation("TransportOrganizationAssignments", fields: [transportOrganizationId], references: [id])
+  assignedTransportUser   User?        @relation("TransportAssignedUser", fields: [assignedTransportUserId], references: [id])
+  assignedBy              User         @relation("TransportAssignedBy", fields: [assignedByUserId], references: [id])
+  events                  TransportEvent[]
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  @@index([transportOrganizationId, assignedAt])
+  @@index([assignedTransportUserId, assignedAt])
+}
+
+model TransportEvent {
+  id                  String              @id @default(cuid())
+  assignmentId        String
+  actorUserId         String
+  type                TransportEventType
+  occurredAt          DateTime            @default(now())
+  notes               String?
+  sanitationConfirmed Boolean?
+  custodyAttested     Boolean             @default(false)
+  previousOrderStatus OrderStatus?
+  nextOrderStatus     OrderStatus?
+  assignment          TransportAssignment @relation(fields: [assignmentId], references: [id])
+  actor               User                @relation("TransportEventActor", fields: [actorUserId], references: [id])
+  createdAt           DateTime            @default(now())
+
+  @@index([assignmentId, occurredAt])
 }
 
 model AuditEvent {

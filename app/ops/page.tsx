@@ -24,6 +24,10 @@ export default async function OpsPage() {
         </div>
       </div>
 
+      <div className="formActions">
+        <Link className="secondaryButton" href="/ops/logistics">Transport & chain of custody</Link>
+      </div>
+
       <div className="metricGrid">
         <article><strong>{candidates.length}</strong><span>Candidate workflow items</span></article>
         <article><strong>{needs.length}</strong><span>Research needs awaiting activation</span></article>

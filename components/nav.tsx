@@ -10,7 +10,8 @@ const links = [
   { href: "/vet", label: "Vet Review" },
   { href: "/ops", label: "RAM Ops" },
   { href: "/finance", label: "Finance" },
-  { href: "/compliance", label: "Compliance" }
+  { href: "/compliance", label: "Compliance" },
+  { href: "/transport", label: "Transport" }
 ];
 
 export function Nav() {
