@@ -1,13 +1,11 @@
 import { notFound } from "next/navigation";
-import { getMarketplaceListing, getMarketplaceListings } from "@/lib/server/marketplace";
+import { getMarketplaceListing } from "@/lib/server/marketplace";
 
-export function generateStaticParams() {
-  return getMarketplaceListings().map((animal) => ({ id: animal.id }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function AnimalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const animal = getMarketplaceListing(id);
+  const animal = await getMarketplaceListing(id);
   if (!animal) notFound();
 
   return (
@@ -22,7 +20,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
           <dl>
             <div><dt>Species / breed</dt><dd>{animal.species} · {animal.breed}</dd></div>
             <div><dt>Age / sex</dt><dd>{animal.age} · {animal.sex}</dd></div>
-            <div><dt>Weight</dt><dd>{animal.weightKg} kg</dd></div>
+            <div><dt>Weight</dt><dd>{animal.weightKg ? animal.weightKg + " kg" : "Not disclosed"}</dd></div>
             <div><dt>Disease stage</dt><dd>{animal.diseaseStage}</dd></div>
             <div><dt>Diagnostic confidence</dt><dd>{animal.diagnosticConfidence}</dd></div>
             <div><dt>Region</dt><dd>{animal.region}</dd></div>
@@ -32,7 +30,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
         </article>
         <article className="panel">
           <h2>Source privacy</h2>
-          <p>The farm is intentionally anonymous. This page is generated from RAM's marketplace projection and has no access to the restricted source record.</p>
+          <p>The farm is intentionally anonymous. This page is generated from RAM&apos;s marketplace projection and has no access to the restricted source record.</p>
           <div className="privacyState"><strong>Current disclosure tier</strong><span>{animal.sourceDisclosure.replaceAll("_", " ")}</span></div>
           <button className="secondaryButton" type="button">Request additional source information</button>
           <p className="finePrint">Requests must identify scientific or purchasing relevance. Release depends on farm permissions, RAM review, and any required NDA or transaction milestone.</p>
