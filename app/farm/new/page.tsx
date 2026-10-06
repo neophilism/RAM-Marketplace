@@ -41,6 +41,7 @@ export default function NewAnimalPage() {
             <label className="span2"><span>Observed signs *</span><textarea name="observedSigns" required rows={5} placeholder="Describe what has changed, duration, severity and progression." /></label>
             <label className="span2"><span>Existing diagnosis or test results</span><textarea name="existingDiagnosis" rows={3} /></label>
             <label className="span2"><span>Current treatment or supportive care</span><textarea name="currentTreatment" rows={3} /></label>
+            <label className="span2"><span>General husbandry / environment notes</span><textarea name="generalHusbandry" rows={3} placeholder="Optional. Describe housing, feeding or environmental context that could be scientifically relevant. RAM keeps this restricted unless disclosure is approved." /></label>
           </div>
         </section>
 

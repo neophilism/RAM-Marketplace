@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DISCLOSURE_FIELDS } from "./disclosure-policy";
 
 export const animalSubmissionSchema = z.object({
   species: z.string().min(2).max(80),
@@ -12,6 +13,7 @@ export const animalSubmissionSchema = z.object({
   firstObservedDate: z.string().optional(),
   existingDiagnosis: z.string().max(500).optional(),
   currentTreatment: z.string().max(2000).optional(),
+  generalHusbandry: z.string().max(4000).optional(),
   cullDecisionDate: z.string().min(1),
   plannedCullAt: z.string().min(1),
   cullReason: z.string().min(5).max(1200),
@@ -180,3 +182,57 @@ export type ReserveOrderInput = z.infer<typeof reserveOrderSchema>;
 export type BuyerCommitmentInput = z.infer<typeof buyerCommitmentSchema>;
 export type SupplierPricingPolicyInput = z.infer<typeof supplierPricingPolicySchema>;
 export type ClearanceReviewInput = z.infer<typeof clearanceReviewSchema>;
+
+
+export const disclosureRequestSchema = z.object({
+  animalCaseId: z.string().min(3).max(120),
+  researchNeedId: z.string().min(3).max(120),
+  requestedFields: z.array(z.enum(DISCLOSURE_FIELDS)).min(1).max(DISCLOSURE_FIELDS.length),
+  scientificReason: z.string().min(20).max(4000)
+});
+
+export const disclosureRamReviewSchema = z.object({
+  requestId: z.string().min(3).max(120),
+  decision: z.enum(["APPROVE", "DENY"]),
+  denialReason: z.string().max(2000).optional()
+}).superRefine((value, ctx) => {
+  if (value.decision === "DENY" && !value.denialReason?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["denialReason"],
+      message: "A denial reason is required"
+    });
+  }
+});
+
+export const disclosureSupplierReviewSchema = z.object({
+  requestId: z.string().min(3).max(120),
+  decision: z.enum(["APPROVE", "DENY"]),
+  denialReason: z.string().max(2000).optional()
+}).superRefine((value, ctx) => {
+  if (value.decision === "DENY" && !value.denialReason?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["denialReason"],
+      message: "A denial reason is required"
+    });
+  }
+});
+
+export const disclosureNdaAcceptSchema = z.object({
+  requestId: z.string().min(3).max(120),
+  accepted: z.literal(true)
+});
+
+export const farmDisclosurePolicySchema = z.object({
+  shareGeneralHusbandry: z.boolean(),
+  shareCountyAfterNda: z.boolean(),
+  shareIdentityPrePurchase: z.boolean(),
+  shareIdentityPostPurchase: z.boolean()
+});
+
+export type DisclosureRequestInput = z.infer<typeof disclosureRequestSchema>;
+export type DisclosureRamReviewInput = z.infer<typeof disclosureRamReviewSchema>;
+export type DisclosureSupplierReviewInput = z.infer<typeof disclosureSupplierReviewSchema>;
+export type DisclosureNdaAcceptInput = z.infer<typeof disclosureNdaAcceptSchema>;
+export type FarmDisclosurePolicyInput = z.infer<typeof farmDisclosurePolicySchema>;

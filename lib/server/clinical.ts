@@ -656,7 +656,8 @@ export async function publishCandidate(
     const updated = updatePrototypeAnimal(input.animalCaseId, {
       status: "MATCHABLE",
       listPriceCents: Math.round(input.listPriceUsd * 100),
-      availabilityText: input.availabilityText
+      availabilityText: input.availabilityText,
+      sourceDisclosure: input.sourceDisclosure
     });
     await refreshMatchesForAnimal(input.animalCaseId);
     return updated;

@@ -71,6 +71,12 @@ export default async function ResearchNeedMatchesPage({
 
           <div className="formActions">
             <Link className="secondaryButton" href={"/marketplace/" + match.animalCaseId}>View anonymous animal profile</Link>
+            <Link
+              className="secondaryButton"
+              href={"/disclosures/new?animalCaseId=" + encodeURIComponent(match.animalCaseId) + "&researchNeedId=" + encodeURIComponent(id)}
+            >
+              Request source facts
+            </Link>
             <form action="/api/orders/reserve" method="post">
               <input type="hidden" name="animalCaseId" value={match.animalCaseId} />
               <input type="hidden" name="researchNeedId" value={id} />

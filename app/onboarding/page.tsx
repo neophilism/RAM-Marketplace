@@ -60,6 +60,7 @@ export default function OnboardingPage() {
           <div className="formGrid">
             <label><span>Farm site label</span><input name="farmSiteLabel" placeholder="e.g. Main finishing site" /></label>
             <label><span>Marketplace region</span><input name="regionLabel" placeholder="e.g. Midwest U.S." /></label>
+            <label><span>County / local jurisdiction</span><input name="countyLabel" placeholder="Restricted unless specifically approved" /></label>
             <label className="span2"><span>Exact address</span><input name="exactAddress" autoComplete="street-address" /></label>
           </div>
         </section>
