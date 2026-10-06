@@ -39,7 +39,7 @@ export default function ResearchNeedsPage() {
 
       <div className="panel">
         <h2>How matching works</h2>
-        <p>Hard scientific, welfare, regulatory and logistics constraints are applied before scoring. Remaining animals are ranked by phenotype, etiology, disease stage, diagnostic confidence, comorbidities, demographics, logistics and study fit.</p>
+        <p>Hard scientific, welfare, regulatory and logistics constraints are applied before scoring. Remaining animals use the canonical 100-point model: phenotype fit 30, diagnostic confidence 20, etiology fit 15, comorbidity fit 10, timing/availability 10, logistics fit 10 and price fit 5.</p>
       </div>
     </section>
   );
