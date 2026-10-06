@@ -1,12 +1,17 @@
 import Link from "next/link";
+import { getPrototypeResearchNeeds } from "@/lib/server/prototype-store";
 
-const needs = [
+export const dynamic = "force-dynamic";
+
+const seededNeeds = [
   { id: "RN-00127", title: "Naturally occurring bilateral hearing loss in swine", status: "MATCH REVIEW", matches: 6, updated: "Today" },
   { id: "RN-00112", title: "Large-animal chronic osteoarthritis model", status: "ACTIVE", matches: 3, updated: "Yesterday" },
   { id: "RN-00098", title: "Spontaneous cardiomyopathy for device feasibility", status: "INSTITUTIONAL CLEARANCE", matches: 1, updated: "Oct 2" }
 ];
 
 export default function ResearchNeedsPage() {
+  const needs = [...getPrototypeResearchNeeds(), ...seededNeeds];
+
   return (
     <section className="page">
       <div className="pageHeader">
@@ -17,6 +22,8 @@ export default function ResearchNeedsPage() {
         </div>
         <Link className="primaryButton" href="/research/new">Create research need</Link>
       </div>
+
+      <div className="prototypeBanner"><strong>Prototype persistence:</strong> submitted needs persist for the current server process and already pass through the production validation contract.</div>
 
       <div className="tableCard">
         <div className="tableRow tableHead"><span>Need</span><span>Status</span><span>Candidates</span><span>Updated</span></div>
