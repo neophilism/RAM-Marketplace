@@ -111,6 +111,25 @@ try {
     });
   }
 
+  for (const organization of organizations) {
+    await prisma.organizationVerification.upsert({
+      where: { organizationId: organization.id },
+      create: {
+        organizationId: organization.id,
+        decision: "APPROVED",
+        method: "CI_SEED",
+        evidenceSummary: "Controlled CI organization seeded for verified lifecycle testing.",
+        reviewedAt: new Date()
+      },
+      update: {
+        decision: "APPROVED",
+        method: "CI_SEED",
+        evidenceSummary: "Controlled CI organization seeded for verified lifecycle testing.",
+        reviewedAt: new Date()
+      }
+    });
+  }
+
   for (const actor of actors) {
     const id = "demo-" + actor.key + "-user";
     const email = actor.key + "@demo.ram.invalid";
