@@ -91,8 +91,7 @@ export const candidatePublishSchema = z.object({
     "PUBLIC_ANONYMIZED",
     "REQUESTABLE",
     "POST_RESERVATION",
-    "POST_PURCHASE",
-    "RAM_INTERNAL_ONLY"
+    "POST_PURCHASE"
   ]),
   publishAttestation: z.literal(true)
 });
