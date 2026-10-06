@@ -60,6 +60,7 @@ export async function createOnboardingAccount(
           organizationId: organization.id,
           internalLabel: input.farmSiteLabel!.trim(),
           regionLabel: input.regionLabel!.trim(),
+          countyLabel: input.countyLabel?.trim(),
           exactAddress: input.exactAddress!.trim(),
           permissions: {
             create: {}

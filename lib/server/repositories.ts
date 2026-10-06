@@ -101,6 +101,7 @@ export async function createAnimalCandidate(
             legalOwnerName: farmSite.organization.name,
             ownerContactName: principal.name,
             ownerContactEmail: principal.email,
+            generalHusbandry: input.generalHusbandry ?? null,
             privateHistory: {
               observedSigns: input.observedSigns,
               firstObservedDate: input.firstObservedDate ?? null,

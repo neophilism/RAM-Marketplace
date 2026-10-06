@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       firstObservedDate: blankToUndefined(form.get("firstObservedDate")),
       existingDiagnosis: blankToUndefined(form.get("existingDiagnosis")),
       currentTreatment: blankToUndefined(form.get("currentTreatment")),
+      generalHusbandry: blankToUndefined(form.get("generalHusbandry")),
       cullDecisionDate: form.get("cullDecisionDate"),
       plannedCullAt: form.get("plannedCullAt"),
       cullReason: form.get("cullReason"),

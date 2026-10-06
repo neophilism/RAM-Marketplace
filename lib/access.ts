@@ -13,6 +13,9 @@ export type Capability =
   | "order:acquisition_commit"
   | "order:clearance"
   | "pricing:manage"
+  | "disclosure:request"
+  | "disclosure:ram_review"
+  | "disclosure:supplier_review"
   | "operations:manage";
 
 const capabilityPermission: Record<Capability, Permission> = {
@@ -28,6 +31,9 @@ const capabilityPermission: Record<Capability, Permission> = {
   "order:acquisition_commit": "PAYOUT_MANAGE",
   "order:clearance": "COMPLIANCE_REVIEW",
   "pricing:manage": "PRICING_POLICY_MANAGE",
+  "disclosure:request": "MATCH_REVIEW",
+  "disclosure:ram_review": "SOURCE_DISCLOSURE_APPROVE",
+  "disclosure:supplier_review": "SOURCE_DISCLOSURE_APPROVE",
   "operations:manage": "MARKETPLACE_OPERATE"
 };
 

@@ -42,7 +42,12 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
           <h2>Source privacy</h2>
           <p>The farm is intentionally anonymous. This page is generated from RAM&apos;s marketplace projection and has no access to the restricted source record.</p>
           <div className="privacyState"><strong>Current disclosure tier</strong><span>{animal.sourceDisclosure.replaceAll("_", " ")}</span></div>
-          <button className="secondaryButton" type="button">Request additional source information</button>
+          <Link
+            className="secondaryButton"
+            href={"/disclosures/new?animalCaseId=" + encodeURIComponent(animal.id)}
+          >
+            Request additional source information
+          </Link>
           <p className="finePrint">Requests must identify scientific or purchasing relevance. Release depends on farm permissions, RAM review, and any required NDA or transaction milestone.</p>
         </article>
       </div>

@@ -5,6 +5,7 @@ const links = [
   { href: "/marketplace", label: "Marketplace" },
   { href: "/research", label: "Research Needs" },
   { href: "/orders", label: "Orders" },
+  { href: "/disclosures", label: "Info Requests" },
   { href: "/farm", label: "Farm Portal" },
   { href: "/vet", label: "Vet Review" },
   { href: "/ops", label: "RAM Ops" },

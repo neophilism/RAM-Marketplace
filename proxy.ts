@@ -24,6 +24,7 @@ export const config = {
     "/farm/:path*",
     "/research/:path*",
     "/orders/:path*",
+    "/disclosures/:path*",
     "/vet/:path*",
     "/ops/:path*",
     "/finance/:path*",

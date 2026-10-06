@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     organizationName: form.get("organizationName"),
     organizationType: form.get("organizationType"),
     regionLabel: blankToUndefined(form.get("regionLabel")),
+    countyLabel: blankToUndefined(form.get("countyLabel")),
     farmSiteLabel: blankToUndefined(form.get("farmSiteLabel")),
     exactAddress: blankToUndefined(form.get("exactAddress"))
   });

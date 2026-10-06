@@ -36,3 +36,12 @@ test("RAM finance and compliance powers are separated", () => {
   assert.equal(can("RAM_COMPLIANCE", "order:clearance"), true);
   assert.equal(can("RAM_COMPLIANCE", "order:acquisition_commit"), false);
 });
+
+
+test("source disclosure authority remains role-separated", () => {
+  assert.equal(can("RESEARCH_PI", "disclosure:request"), true);
+  assert.equal(can("RESEARCH_PI", "disclosure:ram_review"), false);
+  assert.equal(can("SUPPLIER_OWNER_ADMIN", "disclosure:supplier_review"), true);
+  assert.equal(can("SUPPLIER_STAFF", "disclosure:supplier_review"), false);
+  assert.equal(can("RAM_COMPLIANCE", "disclosure:ram_review"), true);
+});

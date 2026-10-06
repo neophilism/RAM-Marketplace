@@ -157,6 +157,7 @@ model Organization {
   facilities    Facility[]
   buyerOrders   Order[]          @relation("BuyerOrganizationOrders")
   researchNeeds ResearchNeed[]
+  disclosureRequests DisclosureRequest[] @relation("DisclosureRequesterOrganization")
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 }
@@ -171,6 +172,8 @@ model User {
   veterinaryReviews  VeterinaryReview[]  @relation("VetReviewer")
   disclosureRequests DisclosureRequest[] @relation("DisclosureRequester")
   auditEvents        AuditEvent[]        @relation("AuditActor")
+  ramReviewedDisclosures DisclosureRequest[] @relation("DisclosureRamReviewer")
+  supplierReviewedDisclosures DisclosureRequest[] @relation("DisclosureSupplierReviewer")
   createdOrders      Order[]             @relation("OrderCreator")
   clearanceReviews   OrderClearance[]    @relation("ClearanceReviewer")
   pricingPolicies    SupplierPricingPolicy[] @relation("PricingPolicyCreator")
@@ -213,6 +216,7 @@ model FarmSite {
   internalLabel  String
   regionLabel    String
   exactAddress   String
+  countyLabel    String?
   organization   Organization          @relation(fields: [organizationId], references: [id])
   sourceRecords  AnimalSourceRecord[]
   permissions    FarmDisclosurePolicy?
@@ -278,6 +282,7 @@ model AnimalSourceRecord {
   localVetName      String?
   localVetContact   String?
   privateHistory    Json?
+  generalHusbandry String?
   privateNotes      String?
   animalCase        AnimalCase @relation(fields: [animalCaseId], references: [publicId])
   farmSite          FarmSite   @relation(fields: [farmSiteId], references: [id])
@@ -349,6 +354,7 @@ model ResearchNeed {
   createdBy               User               @relation("ResearchNeedCreator", fields: [createdByUserId], references: [id])
   matches                 ResearchMatch[]
   orders                  Order[]
+  disclosureRequests      DisclosureRequest[]
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
 
@@ -383,21 +389,40 @@ model ResearchMatch {
 }
 
 model DisclosureRequest {
-  id               String                  @id @default(cuid())
-  animalCaseId     String
-  requesterUserId  String
-  requestedFields  Json
-  scientificReason String
-  status           DisclosureRequestStatus @default(PENDING_RAM_REVIEW)
-  supplierApproved Boolean?
-  reviewedByRam    Boolean                 @default(false)
-  releasedAt       DateTime?
-  animalCase       AnimalCase              @relation(fields: [animalCaseId], references: [publicId])
-  requester        User                    @relation("DisclosureRequester", fields: [requesterUserId], references: [id])
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
+  id                      String                  @id @default(cuid())
+  animalCaseId            String
+  requesterUserId         String
+  requesterOrganizationId String
+  researchNeedId          String
+  orderId                 String?
+  requestedFields         Json
+  scientificReason        String
+  status                  DisclosureRequestStatus @default(PENDING_RAM_REVIEW)
+  supplierApproved        Boolean?
+  reviewedByRam           Boolean                 @default(false)
+  ramReviewerUserId       String?
+  supplierReviewerUserId  String?
+  ramReviewedAt           DateTime?
+  supplierReviewedAt      DateTime?
+  ndaRequired             Boolean                 @default(false)
+  ndaAcceptedAt           DateTime?
+  releasedFields          Json?
+  releasedData            Json?
+  denialReason            String?
+  releasedAt              DateTime?
+  animalCase              AnimalCase              @relation(fields: [animalCaseId], references: [publicId])
+  requester               User                    @relation("DisclosureRequester", fields: [requesterUserId], references: [id])
+  requesterOrganization   Organization            @relation("DisclosureRequesterOrganization", fields: [requesterOrganizationId], references: [id])
+  researchNeed            ResearchNeed            @relation(fields: [researchNeedId], references: [id])
+  order                   Order?                  @relation(fields: [orderId], references: [id])
+  ramReviewer             User?                   @relation("DisclosureRamReviewer", fields: [ramReviewerUserId], references: [id])
+  supplierReviewer        User?                   @relation("DisclosureSupplierReviewer", fields: [supplierReviewerUserId], references: [id])
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
 
   @@index([animalCaseId, status])
+  @@index([requesterOrganizationId, status])
+  @@index([researchNeedId, status])
 }
 
 model Order {
@@ -432,6 +457,7 @@ model Order {
   createdBy                   User         @relation("OrderCreator", fields: [createdByUserId], references: [id])
   supplierPricingPolicy       SupplierPricingPolicy? @relation(fields: [supplierPricingPolicyId], references: [id])
   clearance                   OrderClearance?
+  disclosureRequests          DisclosureRequest[]
   createdAt                   DateTime     @default(now())
   updatedAt                   DateTime     @updatedAt
 

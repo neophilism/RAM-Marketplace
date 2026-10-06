@@ -18,6 +18,10 @@ export default async function CompliancePage() {
         </div>
       </div>
 
+      <div className="formActions">
+        <Link className="secondaryButton" href="/compliance/disclosures">Source disclosure queue</Link>
+      </div>
+
       <div className="tableCard">
         <div className="tableRow tableHead"><span>Order</span><span>Animal / study</span><span>Protocol</span><span>Action</span></div>
         {orders.length === 0 ? (

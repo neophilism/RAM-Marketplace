@@ -19,6 +19,7 @@ export const onboardingSchema = z.object({
   organizationName: z.string().min(2).max(200),
   organizationType: z.enum(PUBLIC_ORGANIZATION_TYPES),
   regionLabel: z.string().max(160).optional(),
+  countyLabel: z.string().max(160).optional(),
   farmSiteLabel: z.string().max(160).optional(),
   exactAddress: z.string().max(500).optional()
 }).superRefine((value, ctx) => {
