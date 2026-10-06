@@ -256,7 +256,8 @@ export async function listResearchNeeds(
       id: true,
       title: true,
       status: true,
-      updatedAt: true
+      updatedAt: true,
+      _count: { select: { matches: true } }
     }
   });
 
@@ -264,7 +265,7 @@ export async function listResearchNeeds(
     id: row.id,
     title: row.title,
     status: row.status,
-    matches: 0,
+    matches: row._count.matches,
     updated: row.updatedAt.toLocaleDateString()
   }));
 }
