@@ -27,7 +27,7 @@ export function evaluateDurableAccess(
 ): DurableAccessDecision {
   if (!state.emailVerified) {
     return {
-      accountAllowed: false,
+      accountAllowed: true,
       operationalAllowed: false,
       reason: "EMAIL_UNVERIFIED"
     };
