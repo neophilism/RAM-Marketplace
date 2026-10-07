@@ -50,6 +50,11 @@ async function login(actor) {
   }
   const setCookie = response.headers.get("set-cookie");
   if (!setCookie) fail("Demo login did not set a session cookie");
+  const location = response.headers.get("location");
+  if (!location) fail("Demo login did not return a workspace redirect");
+  if (!location.startsWith("/") || location.startsWith("//")) {
+    fail("Demo login redirect must remain relative to the public origin: " + location);
+  }
   return setCookie.split(";")[0];
 }
 
