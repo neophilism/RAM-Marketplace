@@ -46,9 +46,11 @@ export async function POST(request: NextRequest) {
     name: actor.name
   };
 
-  const response = NextResponse.redirect(
-    new URL(landingPageForRole(principal.role), request.url),
-    303
-  );
+  const response = new NextResponse(null, {
+    status: 303,
+    headers: {
+      Location: landingPageForRole(principal.role)
+    }
+  });
   return attachSession(response, principal);
 }
