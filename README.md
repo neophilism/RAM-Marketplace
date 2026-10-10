@@ -1,5 +1,7 @@
 # RAM Marketplace
 
+**Complete original development plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
+
 **A marketplace and operating platform for realistic animal models in biomedical research.**
 
 RAM connects biomedical researchers with naturally occurring animal disease cases that can serve as valuable research models, while giving farms a practical additional market for animals they have independently decided to cull.
