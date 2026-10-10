@@ -1,0 +1,48 @@
+{
+  "project": "RAM-Marketplace",
+  "sourceDocument": "docs/DEVELOPMENT_PLAN.md",
+  "sourceSection": "18 Delivery roadmap",
+  "provenance": "Five original phases recovered verbatim as delivery checkpoints from October 5 RAM Corporation plan; not assertions of completed work or GitHub PR numbers.",
+  "items": [
+    {
+      "id": "RAM-01",
+      "repository": "RAM-Marketplace",
+      "origin": "original",
+      "title": "Phase 0 — Product/compliance definition",
+      "details": "Counsel/veterinary-reviewed pilot species, states, independent-cull and broker legal characterization, agreements, workflow, wireframes and data dictionary; no completion without external approvals",
+      "github_prs": []
+    },
+    {
+      "id": "RAM-02",
+      "repository": "RAM-Marketplace",
+      "origin": "original",
+      "title": "Phase 1 — Foundation",
+      "details": "Organization identity, RBAC, supplier onboarding, animal listings, document store, research requests, manual-match console, audit and design system",
+      "github_prs": []
+    },
+    {
+      "id": "RAM-03",
+      "repository": "RAM-Marketplace",
+      "origin": "original",
+      "title": "Phase 2 — Transactional MVP",
+      "details": "Matching, quotes, purchase order/checkout, supplier acquisition/broker terms, veterinarian workspace, clearance, notifications, ledger and operational analytics",
+      "github_prs": []
+    },
+    {
+      "id": "RAM-04",
+      "repository": "RAM-Marketplace",
+      "origin": "original",
+      "title": "Phase 3 — Pilot",
+      "details": "Verified real producer feeds, diagnostic integration, first legitimate corridor transports, incident processes, animal welfare, researcher UAT and financial reconciliation",
+      "github_prs": []
+    },
+    {
+      "id": "RAM-05",
+      "repository": "RAM-Marketplace",
+      "origin": "original",
+      "title": "Phase 4 — Scale-ready",
+      "details": "Versioned rules interface, multi-state scale, SSO/API, supplier batch interfaces, procurement flows, audited matching v2 and second phenotype/species groundwork",
+      "github_prs": []
+    }
+  ]
+}
