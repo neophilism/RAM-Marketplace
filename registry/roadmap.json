@@ -1,0 +1,40 @@
+{
+  "repository": "neophilism/RAM-Marketplace",
+  "title": "RAM-Marketplace",
+  "version": 1,
+  "planVerified": true,
+  "plannedPrCount": 5,
+  "sourceFiles": [
+    "docs/engine-room-roadmap.json",
+    "docs/DEVELOPMENT_PLAN.md"
+  ],
+  "granularity": "delivery phase",
+  "scopeNote": "Five phase-level delivery milestones are documented; this is not a verified per-PR breakdown. Do not call five a verified raw PR count.",
+  "milestones": [
+    {
+      "id": "RAM-01",
+      "title": "Phase 0 — Product/compliance definition",
+      "origin": "original"
+    },
+    {
+      "id": "RAM-02",
+      "title": "Phase 1 — Foundation",
+      "origin": "original"
+    },
+    {
+      "id": "RAM-03",
+      "title": "Phase 2 — Transactional MVP",
+      "origin": "original"
+    },
+    {
+      "id": "RAM-04",
+      "title": "Phase 3 — Pilot",
+      "origin": "original"
+    },
+    {
+      "id": "RAM-05",
+      "title": "Phase 4 — Scale-ready",
+      "origin": "original"
+    }
+  ]
+}
