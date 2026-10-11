@@ -16,13 +16,32 @@
       "id": "RAM-02",
       "title": "Phase 1 — Foundation",
       "origin": "original",
-      "prs": []
+      "prs": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "mappingEvidence": "Foundation implementation confirmed by merged application, RBAC, onboarding, submission, research-need, vet and source-disclosure PRs; original RAM Development Plan Phase 1. Software milestone evidence only; not operational certification."
     },
     {
       "id": "RAM-03",
       "title": "Phase 2 — Transactional MVP",
       "origin": "original",
-      "prs": []
+      "prs": [
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        17
+      ],
+      "mappingEvidence": "Transactional MVP capabilities confirmed by merged matching, reservation/acquisition, logistics, receiving, ledger, dispute, security and payment-execution PRs; original RAM Development Plan Phase 2. Software milestone evidence only; not proof of live payments or operating pilot."
     },
     {
       "id": "RAM-04",
