@@ -1,3 +1,5 @@
+> **Canonical planned-work registry:** [`registry/roadmap.json`](../registry/roadmap.json). This original detailed plan remains available; update new work and PR links only in the registry file.
+
 # RAM-Marketplace: original development plan (complete recovery)
 
 **Source:** ChatGPT Library original `RAM_Corporation_Development_Plan.docx`. Full extracted text is preserved below. **This is the original planning source**, not a current implementation-completion assertion.
