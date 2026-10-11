@@ -44,5 +44,7 @@
       "details": "Versioned rules interface, multi-state scale, SSO/API, supplier batch interfaces, procurement flows, audited matching v2 and second phenotype/species groundwork",
       "github_prs": []
     }
-  ]
+  ],
+  "_canonicalRoadmap": "registry/roadmap.json",
+  "_notice": "Historical scope/evidence; all new PR plans and mappings belong in canonical registry."
 }
