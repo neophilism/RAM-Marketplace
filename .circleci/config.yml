@@ -1,0 +1,138 @@
+version: 2.1
+
+# Full port of .github/workflows/ci.yml; not a lightweight smoke job.
+# Both synthetic prototype and real PostgreSQL end-to-end contracts must pass.
+jobs:
+  verify-prototype:
+    docker:
+      - image: cimg/node:24.21.0
+    resource_class: large
+    environment:
+      CI: "true"
+      NODE_ENV: production
+      RAM_DATA_BACKEND: prototype
+      RAM_DEMO_AUTH_ENABLED: "true"
+      RAM_PUBLIC_ONBOARDING_ENABLED: "false"
+      AUTH_SECRET: ram-ci-e2e-secret-that-is-long-enough-2026
+      RAM_MAX_MUTATION_BYTES: "1048576"
+      RAM_E2E_BASE_URL: http://127.0.0.1:3117
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm run prisma:validate
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+      - run:
+          name: Full live multi-role prototype acceptance
+          command: |
+            npm run start -- --hostname 127.0.0.1 --port 3117 > /tmp/ram-e2e.log 2>&1 &
+            server_pid=$!
+            trap 'cat /tmp/ram-e2e.log; kill "$server_pid" 2>/dev/null || true' EXIT
+            npm run e2e:prototype
+
+  postgres-integration:
+    docker:
+      - image: cimg/node:24.21.0
+      - image: cimg/postgres:16.10
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ram_marketplace
+    resource_class: large
+    environment:
+      CI: "true"
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ram_marketplace
+      RAM_DATA_BACKEND: postgres
+      RAM_DEMO_AUTH_ENABLED: "true"
+      RAM_PUBLIC_ONBOARDING_ENABLED: "false"
+      AUTH_SECRET: ram-ci-postgres-secret-that-is-long-enough-2026
+      RAM_IDENTITY_ASSERTION_SECRET: ram-ci-identity-assertion-secret-value-2026
+      RAM_IDENTITY_ALLOWED_PROVIDERS: ci-idp
+      RAM_IDENTITY_LOGIN_URL: https://identity.example.test/login
+      RAM_IDENTITY_REQUIRE_MFA: "true"
+      RAM_PAYMENT_GATEWAY_NAME: ci-gateway
+      RAM_PAYMENT_GATEWAY_URL: http://127.0.0.1:4119
+      RAM_PAYMENT_GATEWAY_SECRET: ram-ci-payment-gateway-secret-value-2026
+      RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL: "true"
+      RAM_MONITORING_ENABLED: "true"
+      RAM_MONITORING_RUN_TOKEN: ram-ci-monitoring-run-token-value-2026
+      RAM_MONITORING_ALERT_WEBHOOK_URL: http://127.0.0.1:4120/alerts
+      RAM_MONITORING_ALERT_WEBHOOK_SECRET: ram-ci-monitoring-alert-secret-value-2026
+      RAM_MONITORING_ALLOW_INSECURE_LOCAL: "true"
+      RAM_MONITORING_PAYMENT_UNKNOWN_MINUTES: "1"
+      RAM_MONITORING_PAYMENT_PROCESSING_MINUTES: "5"
+      RAM_MONITORING_DISPUTE_HOURS: "1"
+      RAM_MONITORING_PICKUP_HOURS: "1"
+      RAM_MONITORING_ORG_VERIFICATION_HOURS: "1"
+      RAM_MONITORING_MAX_RUN_AGE_MINUTES: "15"
+      RAM_MAX_MUTATION_BYTES: "1048576"
+      PGPASSWORD: postgres
+    steps:
+      - checkout
+      - run:
+          name: Install PostgreSQL dump/restore client and exact application dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -y postgresql-client
+            npm install --include=dev
+      - run:
+          name: Deploy real committed migrations
+          command: npm run db:migrate:deploy
+      - run:
+          name: Verify migrations and schema drift
+          command: |
+            npm run db:migrate:status
+            npm run db:migrate:drift
+      - run:
+          name: Seed controlled PostgreSQL E2E identities
+          command: npm run db:seed:e2e
+      - run: npm run build
+      - run:
+          name: Transaction, identity, payments and monitoring end-to-end
+          command: |
+            npm run payments:fake-gateway > /tmp/ram-payment-gateway.log 2>&1 &
+            gateway_pid=$!
+            npm run monitoring:fake-alert > /tmp/ram-monitoring-alert.log 2>&1 &
+            alert_pid=$!
+            npm run start -- --hostname 127.0.0.1 --port 3118 > /tmp/ram-postgres-e2e.log 2>&1 &
+            server_pid=$!
+            trap 'cat /tmp/ram-postgres-e2e.log; cat /tmp/ram-payment-gateway.log; cat /tmp/ram-monitoring-alert.log; kill "$server_pid" "$gateway_pid" "$alert_pid" 2>/dev/null || true' EXIT
+            RAM_E2E_BASE_URL=http://127.0.0.1:3118 npm run e2e:live
+            RAM_E2E_BASE_URL=http://127.0.0.1:3118 npm run e2e:identity
+            RAM_E2E_BASE_URL=http://127.0.0.1:3118 npm run e2e:payments
+            RAM_E2E_BASE_URL=http://127.0.0.1:3118 npm run e2e:monitoring
+      - run:
+          name: Backup and restore real PostgreSQL database
+          command: |
+            pg_dump -h 127.0.0.1 -U postgres -d ram_marketplace --format=custom --no-owner --no-acl --file=/tmp/ram-marketplace.dump
+            createdb -h 127.0.0.1 -U postgres ram_restore
+            pg_restore -h 127.0.0.1 -U postgres -d ram_restore --no-owner --no-acl /tmp/ram-marketplace.dump
+            for table in Organization User Membership ExternalIdentity IdentityAssertionUse OrganizationVerification OrganizationPaymentProfile AnimalCase ResearchNeed Order FinancialSettlement FinancialLedgerEntry PaymentExecution PaymentWebhookReceipt OperationalIncident MonitoringRun AlertDelivery PilotGateVerification AuditEvent; do
+              source_count=$(psql -h 127.0.0.1 -U postgres -d ram_marketplace -Atc "SELECT count(*) FROM \"$table\";")
+              restore_count=$(psql -h 127.0.0.1 -U postgres -d ram_restore -Atc "SELECT count(*) FROM \"$table\";")
+              test "$source_count" = "$restore_count"
+            done
+            source_migrations=$(psql -h 127.0.0.1 -U postgres -d ram_marketplace -Atc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;')
+            restore_migrations=$(psql -h 127.0.0.1 -U postgres -d ram_restore -Atc 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;')
+            test "$source_migrations" = "$restore_migrations"
+            test "$restore_migrations" -ge 1
+            DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/ram_restore npm run db:migrate:status
+
+  security-status-record:
+    docker:
+      - image: cimg/python:3.12
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: E2EESA status evidence integrity only
+          command: python3 scripts/validate_e2eesa_status.py
+
+workflows:
+  all-required-checks:
+    jobs:
+      - verify-prototype
+      - postgres-integration:
+          requires: [verify-prototype]
+      - security-status-record
