@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "repository": "neophilism/RAM-Marketplace",
+  "classificationStatus": "unverified",
+  "coverageComplete": false,
+  "components": [],
+  "dataFlows": [],
+  "sourceObservations": [
+    {
+      "path": "README.md",
+      "blobSha": "dcedd03ac29ec1d377e2a3b8247af30b7436638d"
+    }
+  ],
+  "limitations": [
+    "This is a discovery placeholder, not a complete E2EESA component inventory or a claim that no protected flows exist.",
+    "Use the pinned upstream 0.2 component-inventory and scoped-assessment contracts for actual assessment."
+  ]
+}
