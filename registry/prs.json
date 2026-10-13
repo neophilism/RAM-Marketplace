@@ -1,16 +1,26 @@
 {
-  "schemaVersion": 1,
   "repository": "neophilism/RAM-Marketplace",
-  "roadmapVersion": 1,
+  "title": "RAM-Marketplace",
   "planVerified": true,
   "plannedPrCount": 5,
+  "sourceFiles": [
+    "docs/engine-room-roadmap.json",
+    "docs/DEVELOPMENT_PLAN.md"
+  ],
+  "granularity": "delivery phase",
+  "scopeNote": "Five phase-level delivery milestones are documented; this is not a verified per-PR breakdown. Do not call five a verified raw PR count.",
+  "schemaVersion": 1,
+  "roadmapVersion": 1,
   "observedAt": "2026-10-11T17:39:08.617Z",
   "units": [
     {
       "id": "RAM-01",
       "title": "Phase 0 — Product/compliance definition",
       "origin": "original",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "RAM-02",
@@ -25,7 +35,10 @@
         6,
         8
       ],
-      "mappingEvidence": "Foundation implementation confirmed by merged application, RBAC, onboarding, submission, research-need, vet and source-disclosure PRs; original RAM Development Plan Phase 1. Software milestone evidence only; not operational certification."
+      "mappingEvidence": "Foundation implementation confirmed by merged application, RBAC, onboarding, submission, research-need, vet and source-disclosure PRs; original RAM Development Plan Phase 1. Software milestone evidence only; not operational certification.",
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "RAM-03",
@@ -41,19 +54,28 @@
         13,
         17
       ],
-      "mappingEvidence": "Transactional MVP capabilities confirmed by merged matching, reservation/acquisition, logistics, receiving, ledger, dispute, security and payment-execution PRs; original RAM Development Plan Phase 2. Software milestone evidence only; not proof of live payments or operating pilot."
+      "mappingEvidence": "Transactional MVP capabilities confirmed by merged matching, reservation/acquisition, logistics, receiving, ledger, dispute, security and payment-execution PRs; original RAM Development Plan Phase 2. Software milestone evidence only; not proof of live payments or operating pilot.",
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "RAM-04",
       "title": "Phase 3 — Pilot",
       "origin": "original",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "RAM-05",
       "title": "Phase 4 — Scale-ready",
       "origin": "original",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     }
   ],
   "pullRequests": [
