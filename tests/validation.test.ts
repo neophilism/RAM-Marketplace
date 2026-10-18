@@ -45,6 +45,16 @@ test("candidate intake requires a cull decision date, planned cull date and reas
   assert.equal(animalSubmissionSchema.safeParse(missingCullFacts).success, false);
 });
 
+test("candidate intake rejects malformed, impossible and reversed cull dates", () => {
+  for (const dates of [
+    { cullDecisionDate: "2026-02-30" },
+    { plannedCullAt: "not-a-date" },
+    { cullDecisionDate: "2026-10-21", plannedCullAt: "2026-10-20" }
+  ]) {
+    assert.equal(animalSubmissionSchema.safeParse({ ...validSubmission, ...dates }).success, false);
+  }
+});
+
 
 test("clearance cannot pass with an unchecked hard gate", () => {
   const result = clearanceReviewSchema.safeParse({
