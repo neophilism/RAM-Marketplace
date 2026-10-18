@@ -18,7 +18,7 @@ export interface RuleDraftInput {
 export interface RuleDraft extends RuleDraftInput {
   revision: number;
   status: "DRAFT";
-  sourceReferences: string[];
+  sourceReferences: readonly string[];
   digest: string;
 }
 

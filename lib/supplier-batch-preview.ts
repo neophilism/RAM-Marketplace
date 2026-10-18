@@ -4,6 +4,12 @@ import { animalSubmissionSchema } from "./validation";
 export const MAX_BATCH_ROWS = 100;
 export const MAX_BATCH_BYTES = 262_144;
 
+export function assertSupplierPreviewRole(role: string): void {
+  if (role !== "SUPPLIER_OWNER_ADMIN" && role !== "SUPPLIER_STAFF") {
+    throw new Error("Forbidden: supplier membership required");
+  }
+}
+
 interface PreviewRow {
   index: number;
   externalAnimalId: string | null;

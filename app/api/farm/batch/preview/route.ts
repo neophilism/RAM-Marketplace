@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRequestSession } from "@/lib/auth/session";
 import { requireCapability } from "@/lib/access";
-import { previewSupplierBatch, readBatchJson } from "@/lib/supplier-batch-preview";
+import { assertSupplierPreviewRole, previewSupplierBatch, readBatchJson } from "@/lib/supplier-batch-preview";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await requireRequestSession(request);
     requireCapability(session.role, "animal:create");
+    assertSupplierPreviewRole(session.role);
     const payload = await readBatchJson(request);
     return NextResponse.json(previewSupplierBatch(session.organizationId, payload));
   } catch (error) {

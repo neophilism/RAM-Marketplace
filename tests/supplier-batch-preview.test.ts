@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { MAX_BATCH_BYTES, previewSupplierBatch, readBatchJson } from "../lib/supplier-batch-preview";
+import { MAX_BATCH_BYTES, assertSupplierPreviewRole, previewSupplierBatch, readBatchJson } from "../lib/supplier-batch-preview";
 
 const submission = {
   species: "Swine",
@@ -50,4 +50,12 @@ test("invalid envelope and oversized or malformed bodies fail before preview", a
   await assert.rejects(readBatchJson(new Request("https://example.test", {
     method: "POST", body: "{"
   })), SyntaxError);
+});
+
+test("supplier preview excludes research, finance and even broad RAM administrator roles", () => {
+  assert.doesNotThrow(() => assertSupplierPreviewRole("SUPPLIER_OWNER_ADMIN"));
+  assert.doesNotThrow(() => assertSupplierPreviewRole("SUPPLIER_STAFF"));
+  for (const role of ["RESEARCH_PI", "RAM_FINANCE_ADMIN", "RAM_SUPER_ADMIN"]) {
+    assert.throws(() => assertSupplierPreviewRole(role), /Forbidden/);
+  }
 });
