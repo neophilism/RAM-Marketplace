@@ -974,3 +974,16 @@ model AuditEvent {
   @@index([action, createdAt])
   @@index([actorUserId, createdAt])
 }
+
+model ComplianceRuleDraftRevision {
+  id           String   @id @default(cuid())
+  ruleId       String
+  revision     Int
+  digest       String   @unique
+  payload      Json
+  authorUserId String
+  createdAt    DateTime @default(now())
+
+  @@unique([ruleId, revision])
+  @@index([ruleId, createdAt])
+}
