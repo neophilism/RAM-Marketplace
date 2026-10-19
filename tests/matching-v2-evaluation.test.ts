@@ -79,3 +79,10 @@ test("malformed, missing and duplicate hard-gate claims are rejected", () => {
   assert.throws(() => evaluateShadowRanking(baseline, update([{ gate: "", state: "PASS" }]), labels), /malformed/);
   assert.throws(() => evaluateShadowRanking(baseline, update([{ gate: "species", state: "UNKNOWN" } as unknown as ShadowMatch["hardGates"][number]]), labels), /malformed/);
 });
+
+test("challenger cannot silently omit or replace a baseline hard-gate category", () => {
+  const changed = baseline.map((item) => item.animalCaseId === "a"
+    ? { ...item, hardGates: [{ gate: "unrelated", state: "PASS" as const }] }
+    : item);
+  assert.throws(() => evaluateShadowRanking(baseline, changed, labels), /hard-gate evidence differs/);
+});

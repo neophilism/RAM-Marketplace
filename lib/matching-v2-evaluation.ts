@@ -85,6 +85,12 @@ export function evaluateShadowRanking(
   const researchNeedId = baseline[0].researchNeedId;
   if (challenger[0].researchNeedId !== researchNeedId) throw new Error("research needs differ");
   for (const id of base.keys()) {
+    const originalGates = new Set(base.get(id)!.hardGates.map((gate) => gate.gate));
+    const proposedGates = new Set(proposed.get(id)!.hardGates.map((gate) => gate.gate));
+    if (originalGates.size !== proposedGates.size ||
+        [...originalGates].some((gate) => !proposedGates.has(gate))) {
+      throw new Error(`challenger hard-gate evidence differs for ${id}`);
+    }
     if (typeof labels[id] !== "boolean") throw new Error(`reviewed relevance label missing for ${id}`);
   }
 
