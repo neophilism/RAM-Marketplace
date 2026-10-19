@@ -18,7 +18,7 @@ export function identityBoundaryConfig(
   return {
     enabled:
       allowedProviders.length > 0 &&
-      Boolean(env.RAM_IDENTITY_ASSERTION_SECRET?.trim()) &&
+      (env.RAM_IDENTITY_ASSERTION_SECRET?.trim().length ?? 0) >= 32 &&
       Boolean(loginUrl),
     allowedProviders,
     requireMfa: env.RAM_IDENTITY_REQUIRE_MFA !== "false",
