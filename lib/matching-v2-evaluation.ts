@@ -33,7 +33,17 @@ function validateRecords(records: readonly ShadowMatch[], label: string): Map<st
     if (!Number.isFinite(item.totalScore) || item.totalScore < 0 || item.totalScore > 100) {
       throw new Error(`${label} has an invalid score`);
     }
-    if (item.hardGates.length === 0) throw new Error(`${label} has no hard-gate evidence`);
+    if (!Array.isArray(item.hardGates) || item.hardGates.length === 0) {
+      throw new Error(`${label} has no hard-gate evidence`);
+    }
+    const gateNames = new Set<string>();
+    for (const gate of item.hardGates) {
+      if (!gate || typeof gate.gate !== "string" || !gate.gate.trim() ||
+          !["PASS", "FAIL", "REVIEW"].includes(gate.state) || gateNames.has(gate.gate)) {
+        throw new Error(`${label} has malformed or duplicate hard-gate evidence`);
+      }
+      gateNames.add(gate.gate);
+    }
     if (item.eligible && item.hardGates.some((gate) => gate.state !== "PASS")) {
       throw new Error(`${label} claims eligibility despite its own failed hard gate`);
     }

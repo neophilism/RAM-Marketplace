@@ -70,3 +70,12 @@ test("review-pending baseline hard gates cannot be promoted by a challenger", ()
     ? { ...item, eligible: true }
     : item), pending, { ...labels, d: true }), /failed hard gate/);
 });
+
+test("malformed, missing and duplicate hard-gate claims are rejected", () => {
+  const update = (hardGates: ShadowMatch["hardGates"]) => baseline.map((item) =>
+    item.animalCaseId === "a" ? { ...item, hardGates } : item);
+  assert.throws(() => evaluateShadowRanking(baseline, update([]), labels), /hard-gate evidence/);
+  assert.throws(() => evaluateShadowRanking(baseline, update([{ gate: "species", state: "PASS" }, { gate: "species", state: "PASS" }]), labels), /duplicate hard-gate/);
+  assert.throws(() => evaluateShadowRanking(baseline, update([{ gate: "", state: "PASS" }]), labels), /malformed/);
+  assert.throws(() => evaluateShadowRanking(baseline, update([{ gate: "species", state: "UNKNOWN" } as unknown as ShadowMatch["hardGates"][number]]), labels), /malformed/);
+});
