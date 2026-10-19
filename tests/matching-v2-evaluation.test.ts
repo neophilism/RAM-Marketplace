@@ -53,3 +53,20 @@ test("missing labels, changed candidate sets, duplicates and invalid scores fail
   assert.throws(() => evaluateShadowRanking(baseline, baseline.map((item) => ({ ...item, totalScore: NaN })), labels), /invalid score/);
   assert.throws(() => evaluateShadowRanking(baseline, baseline, labels, 0), /topK/);
 });
+
+test("review-pending baseline hard gates cannot be promoted by a challenger", () => {
+  const pending: ShadowMatch[] = [
+    ...baseline,
+    { animalCaseId: "d", researchNeedId: "need-1", eligible: false, totalScore: 60, hardGates: [{ gate: "vet", state: "REVIEW" }] }
+  ];
+  const challenger = pending.map((item) => item.animalCaseId === "d"
+    ? { ...item, eligible: true, totalScore: 99, hardGates: pass }
+    : item);
+  const result = evaluateShadowRanking(pending, challenger, { ...labels, d: true });
+  assert.deepEqual(result.hardGateRegressions, ["d"]);
+  assert.ok(!result.challengerTopIds.includes("d"));
+  assert.equal(result.passesSafety, false);
+  assert.throws(() => evaluateShadowRanking(pending.map((item) => item.animalCaseId === "d"
+    ? { ...item, eligible: true }
+    : item), pending, { ...labels, d: true }), /failed hard gate/);
+});

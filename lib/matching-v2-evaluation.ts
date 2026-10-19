@@ -34,7 +34,7 @@ function validateRecords(records: readonly ShadowMatch[], label: string): Map<st
       throw new Error(`${label} has an invalid score`);
     }
     if (item.hardGates.length === 0) throw new Error(`${label} has no hard-gate evidence`);
-    if (item.eligible && item.hardGates.some((gate) => gate.state === "FAIL")) {
+    if (item.eligible && item.hardGates.some((gate) => gate.state !== "PASS")) {
       throw new Error(`${label} claims eligibility despite its own failed hard gate`);
     }
     byId.set(item.animalCaseId, item);
@@ -79,13 +79,13 @@ export function evaluateShadowRanking(
   }
 
   const hardGateRegressions = [...base.values()]
-    .filter((item) => item.hardGates.some((gate) => gate.state === "FAIL") && proposed.get(item.animalCaseId)?.eligible)
+    .filter((item) => item.hardGates.some((gate) => gate.state !== "PASS") && proposed.get(item.animalCaseId)?.eligible)
     .map((item) => item.animalCaseId)
     .sort();
 
   // The baseline hard gates remain authoritative even in an offline comparison.
   const permitted = new Set([...base.values()]
-    .filter((item) => !item.hardGates.some((gate) => gate.state === "FAIL"))
+    .filter((item) => item.hardGates.every((gate) => gate.state === "PASS"))
     .map((item) => item.animalCaseId));
   const baselineTopIds = rankedIds([...base.values()]);
   const challengerTopIds = rankedIds([...proposed.values()].filter((item) => permitted.has(item.animalCaseId)));
