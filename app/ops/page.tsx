@@ -28,6 +28,9 @@ export default async function OpsPage() {
       <div className="formActions">
         <Link className="secondaryButton" href="/ops/logistics">Transport & chain of custody</Link>
         <Link className="secondaryButton" href="/ops/disputes">Receiving disputes</Link>
+        {(session.role === "RAM_COMPLIANCE" || session.role === "RAM_SUPER_ADMIN") ? (
+          <Link className="secondaryButton" href="/ops/compliance/rules">Compliance rule drafts</Link>
+        ) : null}
         {can(session.role, "audit:read") ? (
           <>
             <Link className="secondaryButton" href="/ops/audit">Global audit explorer</Link>
