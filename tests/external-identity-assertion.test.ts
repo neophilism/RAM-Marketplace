@@ -111,3 +111,16 @@ test("expired and overlong assertions fail closed", () => {
     /lifetime/
   );
 });
+
+test("malformed identity assertion timestamps and lifetime settings fail closed", () => {
+  for (const invalid of [null, "1000", 1000.5, -1]) {
+    const token = createExternalIdentityAssertion({ ...payload, iat: invalid as number }, secret);
+    assert.throws(() => verifyExternalIdentityAssertion(token, secret, {
+      allowedProviders: ["test-oidc"], requireMfa: true, nowMs: 1_050_000
+    }), /missing required verified claims/);
+  }
+  const token = createExternalIdentityAssertion(payload, secret);
+  assert.throws(() => verifyExternalIdentityAssertion(token, secret, {
+    allowedProviders: ["test-oidc"], requireMfa: true, nowMs: 1_050_000, maxLifetimeSeconds: -1
+  }), /lifetime policy/);
+});
