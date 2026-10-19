@@ -41,6 +41,10 @@ function normalized(input: RuleDraftInput): RuleDraftInput {
     }
   }
   if (input.effectiveFrom > input.effectiveUntil) throw new Error("effective interval is reversed");
+  if (!Array.isArray(input.sourceReferences) || input.sourceReferences.length > 100 ||
+      input.sourceReferences.some((value) => typeof value !== "string" || value.length > 2048)) {
+    throw new Error("source references must be a bounded list of strings");
+  }
   const sources = [...new Set(input.sourceReferences.map((value) => value.trim()))].sort();
   if (sources.length === 0 || sources.some((value) => !value)) {
     throw new Error("at least one nonempty source reference is required");

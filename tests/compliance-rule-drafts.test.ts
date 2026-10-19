@@ -43,3 +43,10 @@ test("invalid dates, missing provenance and malformed corridors fail closed", ()
   assert.throws(() => createRuleDraft({ ...input, sourceReferences: [] }), /source reference/);
   assert.throws(() => createRuleDraft({ ...input, destinationState: "Atlantis" }), /state codes/);
 });
+
+test("source references reject malformed and unbounded inputs", () => {
+  assert.throws(() => createRuleDraft({ ...input, sourceReferences: null as unknown as string[] }), /bounded list/);
+  assert.throws(() => createRuleDraft({ ...input, sourceReferences: [5] as unknown as string[] }), /bounded list/);
+  assert.throws(() => createRuleDraft({ ...input, sourceReferences: Array(101).fill("source") }), /bounded list/);
+  assert.throws(() => createRuleDraft({ ...input, sourceReferences: ["x".repeat(2049)] }), /bounded list/);
+});
