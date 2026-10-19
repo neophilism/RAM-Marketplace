@@ -14,3 +14,10 @@ test("identity boundary stays disabled unless the actual assertion secret meets 
   assert.equal(identityBoundaryConfig({ ...base, RAM_IDENTITY_ASSERTION_SECRET: "  " }).enabled, false);
   assert.equal(identityBoundaryConfig({ ...base, RAM_IDENTITY_ASSERTION_SECRET: undefined }).enabled, false);
 });
+
+test("identity entry URL requires HTTPS, with explicit loopback-only development exception", () => {
+  for (const url of ["javascript:alert(1)", "http://identity.example.test/login", "https://user:pass@identity.example.test/login", "https://identity.example.test/login#fragment"]) {
+    assert.equal(identityBoundaryConfig({ ...base, RAM_IDENTITY_LOGIN_URL: url }).enabled, false);
+  }
+  assert.equal(identityBoundaryConfig({ ...base, RAM_IDENTITY_LOGIN_URL: "http://localhost:3000/login" }).enabled, true);
+});
