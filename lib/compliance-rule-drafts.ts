@@ -82,3 +82,34 @@ export function reviseRuleDraft(current: RuleDraft, expectedDigest: string, inpu
   if (verifiedCurrent.digest !== current.digest) throw new Error("current rule revision has been altered");
   return build(input, current.revision + 1);
 }
+
+export const MAX_RULE_DRAFT_BODY_BYTES = 65_536;
+
+/** Transport guard; a draft-only API must not parse unbounded request bodies. */
+export async function readRuleDraftJson(request: Request): Promise<unknown> {
+  if (!request.body) throw new Error("Rule draft body is required");
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > MAX_RULE_DRAFT_BODY_BYTES) {
+        await reader.cancel();
+        throw new Error("Rule draft body exceeds limit");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+}

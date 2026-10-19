@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRequestSession } from "@/lib/auth/session";
 import { listComplianceRuleDrafts, saveComplianceRuleDraft } from "@/lib/server/compliance-rule-drafts";
-import type { RuleDraftInput } from "@/lib/compliance-rule-drafts";
+import { readRuleDraftJson, type RuleDraftInput } from "@/lib/compliance-rule-drafts";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const principal = await requireRequestSession(request);
-    const payload = await request.json() as { input?: RuleDraftInput; expectedDigest?: string };
+    const payload = await readRuleDraftJson(request) as { input?: RuleDraftInput; expectedDigest?: string };
     if (!payload || typeof payload !== "object" || !payload.input ||
         (payload.expectedDigest !== undefined && typeof payload.expectedDigest !== "string")) {
       return NextResponse.json({ error: "Invalid draft request" }, { status: 400 });

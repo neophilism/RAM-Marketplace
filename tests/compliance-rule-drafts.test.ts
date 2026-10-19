@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRuleDraft, reviseRuleDraft } from "../lib/compliance-rule-drafts";
+import { MAX_RULE_DRAFT_BODY_BYTES, createRuleDraft, readRuleDraftJson, reviseRuleDraft } from "../lib/compliance-rule-drafts";
 
 const input = {
   ruleId: "corridor-us-aa-bb-swine-family-1",
@@ -49,4 +49,13 @@ test("source references reject malformed and unbounded inputs", () => {
   assert.throws(() => createRuleDraft({ ...input, sourceReferences: [5] as unknown as string[] }), /bounded list/);
   assert.throws(() => createRuleDraft({ ...input, sourceReferences: Array(101).fill("source") }), /bounded list/);
   assert.throws(() => createRuleDraft({ ...input, sourceReferences: ["x".repeat(2049)] }), /bounded list/);
+});
+
+test("rule draft request body is bounded and malformed JSON fails closed", async () => {
+  await assert.rejects(readRuleDraftJson(new Request("https://example.test", {
+    method: "POST", body: "x".repeat(MAX_RULE_DRAFT_BODY_BYTES + 1)
+  })), /exceeds limit/);
+  await assert.rejects(readRuleDraftJson(new Request("https://example.test", {
+    method: "POST", body: "{"
+  })), SyntaxError);
 });
