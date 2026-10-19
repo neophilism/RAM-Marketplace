@@ -95,8 +95,10 @@ export function verifyExternalIdentityAssertion(
     typeof payload.mfa !== "boolean" ||
     typeof payload.jti !== "string" ||
     payload.jti.length < 12 ||
+    typeof payload.iat !== "number" ||
     !Number.isSafeInteger(payload.iat) ||
     payload.iat < 0 ||
+    typeof payload.exp !== "number" ||
     !Number.isSafeInteger(payload.exp) ||
     payload.exp < 0
   ) {
