@@ -32,6 +32,17 @@ export async function saveComplianceRuleDraft(
       data: { ruleId: result.ruleId, revision: result.revision, digest: result.digest,
         authorUserId: principal.userId, payload: JSON.parse(JSON.stringify(result)) }
     });
+    await tx.auditEvent.create({
+      data: {
+        actorUserId: principal.userId,
+        organizationId: principal.organizationId,
+        action: current ? "COMPLIANCE_RULE_DRAFT_REVISED" : "COMPLIANCE_RULE_DRAFT_CREATED",
+        entityType: "ComplianceRuleDraftRevision",
+        entityId: result.ruleId,
+        previousState: current ? { revision: current.revision, digest: current.digest } : undefined,
+        nextState: { revision: result.revision, digest: result.digest, status: "DRAFT" }
+      }
+    });
     return result;
   });
 }
