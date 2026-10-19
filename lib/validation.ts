@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { DISCLOSURE_FIELDS } from "./disclosure-policy";
 
+function validCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+const calendarDate = z.string().refine(validCalendarDate, "Must be a valid ISO calendar date");
+
 export const animalSubmissionSchema = z.object({
   species: z.string().min(2).max(80),
   breed: z.string().max(120).optional(),
@@ -10,16 +18,20 @@ export const animalSubmissionSchema = z.object({
   condition: z.string().min(3).max(200),
   diseaseStage: z.string().max(120).optional(),
   observedSigns: z.string().min(10).max(4000),
-  firstObservedDate: z.string().optional(),
+  firstObservedDate: calendarDate.optional(),
   existingDiagnosis: z.string().max(500).optional(),
   currentTreatment: z.string().max(2000).optional(),
   generalHusbandry: z.string().max(4000).optional(),
-  cullDecisionDate: z.string().min(1),
-  plannedCullAt: z.string().min(1),
+  cullDecisionDate: calendarDate,
+  plannedCullAt: calendarDate,
   cullReason: z.string().min(5).max(1200),
   welfareUrgency: z.enum(["ROUTINE", "SOON", "URGENT"]),
   independentCullAttestation: z.literal(true),
   ownerAttestation: z.literal(true)
+}).superRefine((value, ctx) => {
+  if (value.plannedCullAt < value.cullDecisionDate) {
+    ctx.addIssue({ code: "custom", path: ["plannedCullAt"], message: "Planned cull date cannot precede the cull decision" });
+  }
 });
 
 export const researchNeedSchema = z.object({

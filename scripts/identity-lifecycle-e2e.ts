@@ -309,6 +309,49 @@ try {
     fail("Organization approval record was not persisted");
   }
 
+
+  // Draft-only compliance authoring: durable CAS revisions, tenant role denial and audit evidence.
+  const draftInput = {
+    ruleId: "ci-synthetic-rule-versioning",
+    originState: "AA",
+    destinationState: "BB",
+    species: "Swine",
+    conditionFamily: "Synthetic fixture",
+    prohibited: true,
+    rationale: "CI test only; not operational authorization",
+    sourceReferences: ["ci-synthetic-reference"],
+    effectiveFrom: "2026-01-01",
+    effectiveUntil: "2026-12-31",
+    authorId: "demo-ram-user"
+  };
+  async function saveDraft(cookie: string, input: typeof draftInput, expectedDigest?: string) {
+    return fetch(base + "/api/ops/compliance/rules/drafts", {
+      method: "POST",
+      headers: { Origin: base, Cookie: cookie, "Content-Type": "application/json" },
+      body: JSON.stringify({ input, expectedDigest })
+    });
+  }
+  const forbiddenDraft = await saveDraft(scientistCookie, draftInput);
+  expectStatus(forbiddenDraft, 403, "non-RAM author rejected");
+  const firstDraftResponse = await saveDraft(ramCookie, draftInput);
+  expectStatus(firstDraftResponse, 201, "first compliance rule draft");
+  const firstDraft = (await firstDraftResponse.json()).draft as { revision: number; digest: string; status: string };
+  if (firstDraft.revision !== 1 || firstDraft.status !== "DRAFT") fail("First compliance rule must be a nonactive draft");
+  const nextDraftResponse = await saveDraft(ramCookie, { ...draftInput, rationale: "Updated CI review text" }, firstDraft.digest);
+  expectStatus(nextDraftResponse, 201, "second compliance rule draft");
+  const nextDraft = (await nextDraftResponse.json()).draft as { revision: number; digest: string; status: string };
+  if (nextDraft.revision !== 2 || nextDraft.status !== "DRAFT") fail("Revision must remain DRAFT");
+  expectStatus(await saveDraft(ramCookie, draftInput, firstDraft.digest), 400, "stale digest cannot overwrite");
+  const persisted = await prisma.complianceRuleDraftRevision.findMany({
+    where: { ruleId: draftInput.ruleId }, orderBy: { revision: "asc" }
+  });
+  if (persisted.length !== 2 || persisted[0].digest !== firstDraft.digest ||
+      persisted[1].digest !== nextDraft.digest) fail("Draft revision ledger is not append-only");
+  const auditCount = await prisma.auditEvent.count({
+    where: { entityType: "ComplianceRuleDraftRevision", entityId: draftInput.ruleId }
+  });
+  if (auditCount !== 2) fail("Each committed draft revision must have atomic audit evidence");
+
   console.log(
     "RAM identity lifecycle E2E passed: signed login, replay prevention, membership revocation, organization suspension, verified onboarding and approval."
   );

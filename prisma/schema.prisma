@@ -249,6 +249,7 @@ model Organization {
   type          OrganizationType
   status        OrganizationStatus @default(PENDING_VERIFICATION)
   memberships   Membership[]
+  supplierBatchImports SupplierBatchImport[]
   farmSites     FarmSite[]
   facilities    Facility[]
   buyerOrders   Order[]          @relation("BuyerOrganizationOrders")
@@ -268,6 +269,7 @@ model User {
   emailVerifiedAt    DateTime?
   name               String
   memberships        Membership[]
+  createdSupplierBatchImports SupplierBatchImport[]
   createdNeeds       ResearchNeed[]      @relation("ResearchNeedCreator")
   veterinaryReviews  VeterinaryReview[]  @relation("VetReviewer")
   disclosureRequests DisclosureRequest[] @relation("DisclosureRequester")
@@ -973,4 +975,34 @@ model AuditEvent {
   @@index([organizationId, createdAt])
   @@index([action, createdAt])
   @@index([actorUserId, createdAt])
+}
+
+model ComplianceRuleDraftRevision {
+  id           String   @id @default(cuid())
+  ruleId       String
+  revision     Int
+  digest       String   @unique
+  payload      Json
+  authorUserId String
+  createdAt    DateTime @default(now())
+
+  @@unique([ruleId, revision])
+  @@index([ruleId, createdAt])
+}
+
+model SupplierBatchImport {
+  id             String       @id @default(cuid())
+  organizationId String
+  batchKey       String
+  manifestDigest String
+  rowCount       Int
+  state          String       @default("QUARANTINED")
+  rows           Json
+  createdById    String
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdBy      User         @relation(fields: [createdById], references: [id])
+
+  @@unique([organizationId, batchKey])
+  @@index([organizationId, createdAt])
 }

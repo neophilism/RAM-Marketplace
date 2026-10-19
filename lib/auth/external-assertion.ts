@@ -96,7 +96,11 @@ export function verifyExternalIdentityAssertion(
     typeof payload.jti !== "string" ||
     payload.jti.length < 12 ||
     typeof payload.iat !== "number" ||
-    typeof payload.exp !== "number"
+    !Number.isSafeInteger(payload.iat) ||
+    payload.iat < 0 ||
+    typeof payload.exp !== "number" ||
+    !Number.isSafeInteger(payload.exp) ||
+    payload.exp < 0
   ) {
     throw new Error("External identity assertion is missing required verified claims");
   }
@@ -111,6 +115,9 @@ export function verifyExternalIdentityAssertion(
 
   const nowSeconds = Math.floor((policy.nowMs ?? Date.now()) / 1000);
   const maxLifetime = policy.maxLifetimeSeconds ?? 300;
+  if (!Number.isSafeInteger(maxLifetime) || maxLifetime <= 0) {
+    throw new Error("Invalid external assertion lifetime policy");
+  }
 
   if (payload.iat > nowSeconds + 60) {
     throw new Error("External identity assertion was issued in the future");
