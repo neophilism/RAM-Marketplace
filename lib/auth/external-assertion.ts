@@ -96,7 +96,9 @@ export function verifyExternalIdentityAssertion(
     typeof payload.jti !== "string" ||
     payload.jti.length < 12 ||
     !Number.isSafeInteger(payload.iat) ||
-    !Number.isSafeInteger(payload.exp)
+    payload.iat < 0 ||
+    !Number.isSafeInteger(payload.exp) ||
+    payload.exp < 0
   ) {
     throw new Error("External identity assertion is missing required verified claims");
   }
