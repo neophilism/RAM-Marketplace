@@ -5,7 +5,7 @@ export type PilotSmokeResult = {
   liveness: "PASS";
   readiness: "PASS";
   monitoring: "PASS";
-  monitoringRunId?: string;
+  monitoringRunId: string;
 };
 
 type FetchLike = typeof fetch;
@@ -28,7 +28,16 @@ export function normalizePilotBaseUrl(
     throw new Error("RAM_PILOT_BASE_URL is required");
   }
 
-  const url = new URL(raw.trim());
+  const value = raw.trim();
+  let url: URL;
+  try {
+    // Reject ambiguity instead of silently removing query/fragment or control bytes.
+    if (!/^https?:\/\//i.test(value) || /[\x00-\x20\x7f\\]/.test(value) || /[?#]/.test(value)) throw new Error();
+    url = new URL(value);
+    if (!url.hostname) throw new Error();
+  } catch {
+    throw new Error("Invalid RAM_PILOT_BASE_URL");
+  }
   if (url.username || url.password) {
     throw new Error("RAM_PILOT_BASE_URL must not contain embedded credentials");
   }
@@ -42,18 +51,49 @@ export function normalizePilotBaseUrl(
   }
 
   url.pathname = url.pathname.replace(/\/+$/, "");
-  url.search = "";
-  url.hash = "";
   return url.toString().replace(/\/$/, "");
 }
 
-async function readJson(response: Response, label: string) {
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
+const MAX_SMOKE_RESPONSE_BYTES = 65_536;
+
+async function discardResponse(response: Response) {
+  try { await response.body?.cancel(); } catch { /* Disposal must not replace the safe failure. */ }
+}
+
+async function readJson(response: Response, label: string): Promise<Record<string, unknown>> {
+  if (!/^application\/json(?:\s*;|$)/i.test(response.headers.get("content-type") ?? "")) {
+    await discardResponse(response);
     throw new Error(label + " returned non-JSON response");
   }
+  const declared = response.headers.get("content-length");
+  if (declared !== null && (!/^[0-9]+$/.test(declared) || Number(declared) > MAX_SMOKE_RESPONSE_BYTES)) {
+    await discardResponse(response);
+    throw new Error(label + " response exceeds the size limit");
+  }
+  if (!response.body) throw new Error(label + " returned no JSON object");
+  const reader = response.body.getReader(), chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      let item: ReadableStreamReadResult<Uint8Array>;
+      try { item = await reader.read(); }
+      catch { throw new Error(label + " response unavailable"); }
+      if (item.done) break;
+      length += item.value.byteLength;
+      if (length > MAX_SMOKE_RESPONSE_BYTES) {
+        try { await reader.cancel(); } catch { /* Preserve bounded-response error. */ }
+        throw new Error(label + " response exceeds the size limit");
+      }
+      chunks.push(item.value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  let body: unknown;
+  try { body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); }
+  catch { throw new Error(label + " returned non-JSON response"); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error(label + " returned no JSON object");
   return body as Record<string, unknown>;
 }
 
@@ -63,20 +103,27 @@ async function checkedFetch(
   init: RequestInit | undefined,
   label: string
 ) {
-  const response = await fetchImpl(url, {
-    ...init,
-    signal: AbortSignal.timeout(15_000)
-  });
-  const body = await readJson(response, label);
-  if (!response.ok) {
-    throw new Error(
-      label +
-        " failed with HTTP " +
-        response.status +
-        (typeof body.error === "string" ? ": " + body.error : "")
-    );
+  let response: Response;
+  try {
+    response = await fetchImpl(url, {
+      ...init,
+      headers: { accept: "application/json", ...init?.headers },
+      redirect: "error", cache: "no-store", credentials: "omit",
+      signal: AbortSignal.timeout(15_000)
+    });
+  } catch {
+    // A failed monitoring POST can have an unknown remote effect; never retry it here.
+    throw new Error(label + " request unavailable; inspect remote evidence before retrying");
   }
-  return body;
+  if (response.redirected) {
+    await discardResponse(response);
+    throw new Error(label + " returned an unexpected redirect");
+  }
+  if (!response.ok) {
+    await discardResponse(response);
+    throw new Error(label + " failed with HTTP " + response.status);
+  }
+  return readJson(response, label);
 }
 
 export async function runPilotSmoke(
@@ -131,8 +178,12 @@ export async function runPilotSmoke(
     },
     "Monitoring cycle"
   );
-  if (monitoring.ok !== true) {
+  if (monitoring.ok !== true || monitoring.status !== "SUCCESS") {
     throw new Error("Monitoring cycle returned unexpected result");
+  }
+
+  if (typeof monitoring.runId !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(monitoring.runId)) {
+    throw new Error("Monitoring cycle returned no valid run receipt");
   }
 
   return {
@@ -140,8 +191,7 @@ export async function runPilotSmoke(
     liveness: "PASS",
     readiness: "PASS",
     monitoring: "PASS",
-    monitoringRunId:
-      typeof monitoring.runId === "string" ? monitoring.runId : undefined
+    monitoringRunId: monitoring.runId
   };
 }
 
@@ -154,7 +204,7 @@ async function main() {
     console.log("[INFO] monitoring run " + result.monitoringRunId);
   }
   console.log("");
-  console.log("Deployed smoke rehearsal: READY");
+  console.log("Deployed smoke checks passed; pilot authorization and alert delivery remain separate gates.");
 }
 
 const invokedPath = process.argv[1]

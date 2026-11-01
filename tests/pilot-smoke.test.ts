@@ -40,7 +40,7 @@ test("runPilotSmoke exercises live, ready and authenticated monitoring", async (
       return Response.json({ status: "ready" });
     }
     if (url.endsWith("/api/monitoring/run")) {
-      return Response.json({ ok: true, runId: "run-123" });
+      return Response.json({ ok: true, status: "SUCCESS", runId: "run-123" });
     }
     return Response.json({ error: "unexpected" }, { status: 404 });
   }) as typeof fetch;
