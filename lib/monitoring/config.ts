@@ -33,7 +33,7 @@ export function strongMonitoringSecret(
 ): value is string {
   return Boolean(
     value &&
-      value.length >= 32 &&
+      value.trim().length >= 32 &&
       !/replace|changeme|example|development-only/i.test(value)
   );
 }
@@ -133,7 +133,19 @@ export function requireAlertWebhookConfig(
     );
   }
 
-  const parsed = new URL(config.alertUrl);
+  // Validate the endpoint before emitting a signed operational alert. URL()
+  // alone normalizes backslashes and silently removes some control characters.
+  let parsed: URL;
+  try {
+    if (/[\x00-\x20\x7f\\]/.test(config.alertUrl)) throw new Error();
+    parsed = new URL(config.alertUrl);
+    if (!parsed.hostname || parsed.username || parsed.password || config.alertUrl.includes("#")) {
+      throw new Error();
+    }
+  } catch {
+    // Never echo a configured endpoint that could contain credentials.
+    throw new Error("Invalid monitoring alert webhook URL");
+  }
   const loopback =
     parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
 
@@ -183,16 +195,26 @@ export function verifyMonitoringSignature(
   }
 
   const seconds = Number(timestamp);
-  if (!Number.isInteger(seconds)) {
+  if (!/^(0|[1-9][0-9]{0,12})$/.test(timestamp) ||
+      !Number.isSafeInteger(seconds * 1000)) {
     throw new Error("Invalid monitoring signature timestamp");
   }
 
   const nowMs = options.nowMs ?? Date.now();
-  const maxSkewMs = (options.maxSkewSeconds ?? 300) * 1000;
+  const maxSkewSeconds = options.maxSkewSeconds ?? 300;
+  if (!Number.isSafeInteger(nowMs) || nowMs < 0 ||
+      !Number.isSafeInteger(maxSkewSeconds) || maxSkewSeconds < 0 ||
+      !Number.isSafeInteger(maxSkewSeconds * 1000)) {
+    throw new Error("Invalid monitoring verification clock or skew policy");
+  }
+  const maxSkewMs = maxSkewSeconds * 1000;
   if (Math.abs(nowMs - seconds * 1000) > maxSkewMs) {
     throw new Error("Monitoring signature timestamp is outside allowed skew");
   }
 
+  // Buffer.from(hex) truncates at invalid bytes or an odd trailing nibble.
+  // Validate the complete header before comparing its decoded digest.
+  if (!/^[a-f0-9]{64}$/i.test(signature)) throw new Error("Invalid monitoring signature");
   const expected = Buffer.from(
     signMonitoringPayload(rawBody, timestamp, secret),
     "hex"
@@ -211,6 +233,9 @@ export function verifyMonitoringRunToken(
   supplied: string | null,
   expected: string
 ) {
+  if (!strongMonitoringSecret(expected)) {
+    throw new Error("Monitoring bearer token configuration is invalid");
+  }
   if (!supplied?.startsWith("Bearer ")) {
     throw new Error("Monitoring bearer token is required");
   }
