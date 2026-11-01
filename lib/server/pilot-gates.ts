@@ -13,28 +13,15 @@ import type {
 } from "@/lib/pilot-gates";
 import { dataBackend, requirePrisma } from "@/lib/server/db";
 
-export type PilotGateEffectiveStatus =
-  | "PENDING"
-  | "VERIFIED"
-  | "EXPIRED";
+import { pilotGateEffectiveStatus, pilotVerificationEvidence, pilotResetReason } from "@/lib/pilot-gate-status";
+export { pilotGateSummary } from "@/lib/pilot-gate-status";
+export type { PilotGateEffectiveStatus } from "@/lib/pilot-gate-status";
 
 function gateKey(value: string): PilotManualGateKey {
   if (!pilotGateKeys.has(value as PilotManualGateKey)) {
     throw new Error("Unknown pilot gate");
   }
   return value as PilotManualGateKey;
-}
-
-function effectiveStatus(
-  status: "PENDING" | "VERIFIED" | undefined,
-  reviewDueAt: Date | null | undefined,
-  now: Date
-): PilotGateEffectiveStatus {
-  if (status !== "VERIFIED") return "PENDING";
-  if (reviewDueAt && reviewDueAt.getTime() <= now.getTime()) {
-    return "EXPIRED";
-  }
-  return "VERIFIED";
 }
 
 export async function listPilotGateAdministration(
@@ -94,11 +81,7 @@ export async function listPilotGateAdministration(
       const record = byKey.get(gate.key) ?? null;
       return {
         ...gate,
-        effectiveStatus: effectiveStatus(
-          record?.status,
-          record?.reviewDueAt,
-          now
-        ),
+        effectiveStatus: pilotGateEffectiveStatus(record, now),
         record
       };
     }),
@@ -117,7 +100,7 @@ export async function verifyPilotGate(
     throw new Error("Pilot gate verification requires PostgreSQL persistence");
   }
 
-  const evidence = input.evidenceSummary.trim();
+  const evidence = pilotVerificationEvidence(input.evidenceSummary);
   const notes = input.notes?.trim() || null;
   let reviewDueAt: Date | null = null;
 
@@ -224,7 +207,7 @@ export async function resetPilotGate(
 ) {
   requireCapability(principal.role, "admin:manage");
   const key = gateKey(input.gateKey);
-  const reason = input.reason.trim();
+  const reason = pilotResetReason(input.reason);
 
   if (dataBackend() !== "postgres") {
     throw new Error("Pilot gate reset requires PostgreSQL persistence");
@@ -280,22 +263,3 @@ export async function resetPilotGate(
   });
 }
 
-export function pilotGateSummary(
-  gates: Array<{ effectiveStatus: PilotGateEffectiveStatus }>
-) {
-  const verified = gates.filter(
-    (gate) => gate.effectiveStatus === "VERIFIED"
-  ).length;
-  const expired = gates.filter(
-    (gate) => gate.effectiveStatus === "EXPIRED"
-  ).length;
-  const pending = gates.length - verified - expired;
-
-  return {
-    total: gates.length,
-    verified,
-    expired,
-    pending,
-    ready: verified === gates.length
-  };
-}
