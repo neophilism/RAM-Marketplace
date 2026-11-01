@@ -59,12 +59,29 @@ function truthy(value: string | undefined) {
 }
 
 function strongSecret(value: string | undefined) {
-  if (!value || value.length < 32) return false;
+  if (!value || value.trim().length < 32) return false;
   return !/replace|changeme|example|development-only/i.test(value);
 }
 
+/** Parse configuration without connecting or echoing credential-bearing values. */
+function configuredUrl(value: string | undefined): URL | null {
+  if (!value || /[\x00-\x20\x7f\\]/.test(value)) return null;
+  try {
+    const url = new URL(value);
+    return url.hostname ? url : null;
+  } catch { return null; }
+}
+
 function postgresUrl(value: string | undefined) {
-  return Boolean(value && /^postgres(ql)?:\/\//i.test(value));
+  const url = configuredUrl(value);
+  return Boolean(value && /^postgres(ql)?:\/\//i.test(value) && url &&
+    ["postgres:", "postgresql:"].includes(url.protocol) && !value.includes("#"));
+}
+
+function httpsUrl(value: string | undefined, browserFragment = false) {
+  const url = configuredUrl(value);
+  return Boolean(value && /^https:\/\//i.test(value) && url?.protocol === "https:" &&
+    !url.username && !url.password && (browserFragment || !value.includes("#")));
 }
 
 export function evaluatePilotReadiness(
@@ -149,10 +166,10 @@ export function evaluatePilotReadiness(
   checks.push({
     id: "identity_login_url",
     label: "Identity login URL",
-    status: /^https:\/\//i.test(env.RAM_IDENTITY_LOGIN_URL ?? "")
+    status: httpsUrl(env.RAM_IDENTITY_LOGIN_URL, true)
       ? "PASS"
       : "BLOCK",
-    detail: /^https:\/\//i.test(env.RAM_IDENTITY_LOGIN_URL ?? "")
+    detail: httpsUrl(env.RAM_IDENTITY_LOGIN_URL, true)
       ? "Identity login URL uses HTTPS."
       : "Configure RAM_IDENTITY_LOGIN_URL with an HTTPS URL."
   });
@@ -197,12 +214,12 @@ export function evaluatePilotReadiness(
     id: "payment_gateway_url",
     label: "Payment gateway HTTPS endpoint",
     status:
-      /^https:\/\//i.test(paymentUrl) &&
+      httpsUrl(paymentUrl) &&
       env.RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL !== "true"
         ? "PASS"
         : "BLOCK",
     detail:
-      /^https:\/\//i.test(paymentUrl) &&
+      httpsUrl(paymentUrl) &&
       env.RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL !== "true"
         ? "Payment gateway endpoint uses HTTPS and the local insecure override is disabled."
         : "Configure an HTTPS RAM_PAYMENT_GATEWAY_URL and disable RAM_PAYMENT_GATEWAY_ALLOW_INSECURE_LOCAL."
@@ -218,7 +235,7 @@ export function evaluatePilotReadiness(
       : "Set RAM_MONITORING_ENABLED=true before pilot launch."
   });
 
-  const monitoringRunToken = env.RAM_MONITORING_RUN_TOKEN;
+  const monitoringRunToken = env.RAM_MONITORING_RUN_TOKEN?.trim();
   const monitoringRunTokenDistinct =
     strongMonitoringSecret(monitoringRunToken) &&
     monitoringRunToken !== env.AUTH_SECRET &&
@@ -234,7 +251,7 @@ export function evaluatePilotReadiness(
       : "Configure a strong RAM_MONITORING_RUN_TOKEN distinct from session, identity and payment secrets."
   });
 
-  const monitoringAlertSecret = env.RAM_MONITORING_ALERT_WEBHOOK_SECRET;
+  const monitoringAlertSecret = env.RAM_MONITORING_ALERT_WEBHOOK_SECRET?.trim();
   const monitoringAlertSecretDistinct =
     strongMonitoringSecret(monitoringAlertSecret) &&
     monitoringAlertSecret !== env.AUTH_SECRET &&
@@ -253,7 +270,7 @@ export function evaluatePilotReadiness(
 
   const monitoringAlertUrl = env.RAM_MONITORING_ALERT_WEBHOOK_URL ?? "";
   const monitoringAlertHttps =
-    /^https:\/\//i.test(monitoringAlertUrl) &&
+    httpsUrl(monitoringAlertUrl) &&
     env.RAM_MONITORING_ALLOW_INSECURE_LOCAL !== "true";
 
   checks.push({
